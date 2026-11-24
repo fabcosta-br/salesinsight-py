@@ -1,0 +1,21 @@
+# Ambientes locais e segredos
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Python / editor
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.vscode/
+.idea/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# O dataset vendas.csv e os relatórios outputs/ devem ser versionados após validação.
