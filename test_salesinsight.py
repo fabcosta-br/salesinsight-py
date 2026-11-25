@@ -1,10 +1,11 @@
-"""Testes de geração, inspeção, limpeza e transformação de vendas."""
+"""Testes de preparação e análise de dados de vendas."""
 
 import csv
 import re
 import subprocess
 import sys
 import unittest
+from collections import Counter
 from contextlib import redirect_stdout
 from datetime import datetime
 from hashlib import sha256
@@ -13,11 +14,15 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from salesinsight import (
+    calcular_metricas,
     carregar_dataset,
     criar_colunas_derivadas,
+    exibir_metricas,
+    exibir_segmentacao,
     gerar_dataset_vendas,
     inspecionar_dados,
     limpar_dados,
+    segmentar_clientes,
 )
 
 
@@ -301,6 +306,169 @@ class TesteLimpezaTransformacao(unittest.TestCase):
             and all(valor is not None and valor != "" for valor in r.values())
             for r in derivados
         ))
+
+
+class TesteMetricasSegmentacao(unittest.TestCase):
+    def setUp(self):
+        self.venda = {
+            "mes": 1,
+            "produto": "Notebook",
+            "categoria": "Computadores",
+            "regiao": "Sul",
+            "cliente": "Cliente_001",
+            "quantidade": 1,
+            "receita_total": 100.0,
+        }
+
+    def test_metricas_agrupam_receita_e_calculam_ticket_por_registro(self):
+        registros = [
+            dict(self.venda, mes=2, produto="Mouse", categoria="Perifericos", quantidade=2),
+            dict(self.venda, regiao="Norte", quantidade=4, receita_total=400.0),
+            dict(self.venda, produto="Mouse", categoria="Perifericos", receita_total=50.0),
+            dict(self.venda, quantidade=3, receita_total=450.0),
+        ]
+        originais = [registro.copy() for registro in registros]
+        metricas = calcular_metricas(registros)
+
+        self.assertEqual(registros, originais)
+        self.assertEqual(metricas, {
+            "por_mes": [
+                {"mes": 1, "receita_total": 900.0, "quantidade": 8, "n_vendas": 3},
+                {"mes": 2, "receita_total": 100.0, "quantidade": 2, "n_vendas": 1},
+            ],
+            "top_produtos": [
+                {"produto": "Notebook", "receita_total": 850.0},
+                {"produto": "Mouse", "receita_total": 150.0},
+            ],
+            "por_categoria": [
+                {"categoria": "Computadores", "receita_total": 850.0},
+                {"categoria": "Perifericos", "receita_total": 150.0},
+            ],
+            "por_regiao": [
+                {"regiao": "Norte", "receita_total": 400.0, "n_vendas": 1, "ticket_medio": 400.0},
+                {"regiao": "Sul", "receita_total": 600.0, "n_vendas": 3, "ticket_medio": 200.0},
+            ],
+        })
+
+    def test_top_5_produtos_desempata_por_nome(self):
+        produtos = ("Zeta", "Beta", "Alfa", "Gama", "Epsilon", "Delta", "Eta")
+        registros = [dict(self.venda, produto=produto) for produto in produtos]
+        registros[0]["receita_total"] = 200.0
+
+        top = calcular_metricas(registros)["top_produtos"]
+
+        self.assertEqual([linha["produto"] for linha in top], ["Zeta", "Alfa", "Beta", "Delta", "Epsilon"])
+
+    def test_segmentacao_acumula_centavos_e_respeita_limites(self):
+        gastos = (
+            ("Cliente_005", 5000.0),
+            ("Cliente_001", 4999.99),
+            ("Cliente_002", 4999.70),
+            ("Cliente_002", 3 * 0.1),
+            ("Cliente_003", 15000.0),
+            ("Cliente_004", 15000.01),
+        )
+        registros = [dict(self.venda, cliente=nome, receita_total=valor) for nome, valor in gastos]
+        originais = [registro.copy() for registro in registros]
+        clientes = segmentar_clientes(registros)
+
+        self.assertEqual(registros, originais)
+        self.assertEqual(clientes, [
+            {"cliente": "Cliente_004", "total_gasto": 15000.01, "segmento": "Ouro"},
+            {"cliente": "Cliente_003", "total_gasto": 15000.0, "segmento": "Prata"},
+            {"cliente": "Cliente_002", "total_gasto": 5000.0, "segmento": "Prata"},
+            {"cliente": "Cliente_005", "total_gasto": 5000.0, "segmento": "Prata"},
+            {"cliente": "Cliente_001", "total_gasto": 4999.99, "segmento": "Bronze"},
+        ])
+
+    def test_exibicao_lista_top_10_e_conta_clientes_fora_do_ranking(self):
+        registros = [
+            dict(self.venda, cliente=f"Cliente_{i:03d}", receita_total=float(i * 1000))
+            for i in range(1, 13)
+        ]
+        with redirect_stdout(StringIO()) as saida:
+            exibir_segmentacao(segmentar_clientes(registros))
+
+        ranking, distribuicao = saida.getvalue().split("\nClientes por segmento:\n")
+        linhas = [linha.strip() for linha in ranking.splitlines() if linha.startswith("  ")]
+        self.assertEqual([linha.split(" | ")[0] for linha in linhas], [
+            f"Cliente_{i:03d}" for i in range(12, 2, -1)
+        ])
+        self.assertEqual(linhas[0], "Cliente_012 | R$ 12.000,00 | Prata")
+        self.assertEqual(distribuicao.splitlines(), ["  Bronze: 4", "  Prata: 8", "  Ouro: 0"])
+
+    def test_resultados_vazios_exibem_contagens_zero(self):
+        metricas = calcular_metricas([])
+        clientes = segmentar_clientes([])
+        self.assertEqual(metricas, {
+            "por_mes": [], "top_produtos": [], "por_categoria": [], "por_regiao": [],
+        })
+        self.assertEqual(clientes, [])
+        with redirect_stdout(StringIO()) as saida:
+            exibir_metricas(metricas)
+            exibir_segmentacao(clientes)
+
+        for texto in ("sem registros válidos", "Nenhum cliente identificado", "Bronze: 0", "Prata: 0", "Ouro: 0"):
+            self.assertIn(texto, saida.getvalue())
+
+    def test_vendas_sem_rotulos_opcionais_continuam_nos_totais(self):
+        registro = dict(self.venda, produto=None, categoria="", regiao=None, cliente="")
+        metricas = calcular_metricas([registro])
+
+        self.assertEqual(metricas["por_mes"][0]["receita_total"], 100.0)
+        self.assertEqual(metricas["por_categoria"], [{"categoria": "", "receita_total": 100.0}])
+        self.assertEqual(metricas["por_regiao"], [
+            {"regiao": "", "receita_total": 100.0, "n_vendas": 1, "ticket_medio": 100.0},
+        ])
+        self.assertEqual(metricas["top_produtos"], [])
+        self.assertEqual(segmentar_clientes([registro]), [])
+
+    def test_metricas_e_segmentos_reconciliam_o_dataset_oficial(self):
+        brutos = carregar_dataset(RAIZ / "vendas.csv")
+        with redirect_stdout(StringIO()):
+            limpos, _ = limpar_dados(brutos)
+        derivados = criar_colunas_derivadas(limpos)
+        metricas = calcular_metricas(derivados)
+        clientes = segmentar_clientes(derivados)
+
+        self.assertEqual(len(derivados), 183)
+        self.assertEqual(len(metricas["por_mes"]), 12)
+        self.assertEqual(sum(linha["quantidade"] for linha in metricas["por_mes"]), 1031)
+        for dimensao in ("por_mes", "por_regiao"):
+            self.assertEqual(sum(linha["n_vendas"] for linha in metricas[dimensao]), 183)
+        for dimensao in ("por_mes", "por_categoria", "por_regiao"):
+            receita = sum(linha["receita_total"] for linha in metricas[dimensao])
+            self.assertAlmostEqual(receita, 1290346.30, places=2)
+        self.assertEqual([linha["produto"] for linha in metricas["top_produtos"]], [
+            "Notebook", "Tablet", "Smartphone", "Monitor", "Headset",
+        ])
+        self.assertEqual(metricas["top_produtos"][0]["receita_total"], 374174.85)
+        self.assertEqual(len(clientes), 50)
+        self.assertAlmostEqual(sum(linha["total_gasto"] for linha in clientes), 1290346.30, places=2)
+        self.assertEqual(clientes[0], {
+            "cliente": "Cliente_006", "total_gasto": 65905.09, "segmento": "Ouro",
+        })
+        self.assertEqual(Counter(linha["segmento"] for linha in clientes), {"Bronze": 6, "Prata": 10, "Ouro": 34})
+
+    def test_execucao_principal_exibe_as_quatro_metricas_e_a_segmentacao(self):
+        resultado = subprocess.run(
+            [sys.executable, "-X", "utf8", str(RAIZ / "salesinsight.py")],
+            cwd=RAIZ, capture_output=True, encoding="utf-8", check=True,
+        )
+        titulos = (
+            "Primeiro registro após a transformação:",
+            "Receita, unidades e vendas por mês:",
+            "Top 5 produtos por receita:",
+            "Receita por categoria:",
+            "Receita e ticket médio por região:",
+            "Top 10 clientes por gasto:",
+            "Clientes por segmento:",
+        )
+        posicoes = [resultado.stdout.index(titulo) for titulo in titulos]
+        self.assertEqual(posicoes, sorted(posicoes))
+        self.assertIn("Registros válidos: 183", resultado.stdout)
+        self.assertIn("Cliente_006 | R$ 65.905,09 | Ouro", resultado.stdout)
+        self.assertEqual(resultado.stderr, "")
 
 
 if __name__ == "__main__":

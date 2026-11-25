@@ -5,7 +5,6 @@
 
 ## A fazer
 
-- [ ] **RF05–06 — Análise/segmentação:** agregações em quatro dimensões, Top 5, Top 10 clientes e Bronze/Prata/Ouro.
 - [ ] **RF07–09 — Arquitetura/saída:** funções, ordem superior, exportações CSV/JSON e execução `main()` sem erros.
 - [ ] **D1 — README:** transformar documentação de planejamento em manual verificável.
 - [ ] **D2 — Revisão Git:** branches, commits claros, PRs, comparação `develop → main`.
@@ -16,7 +15,7 @@
 
 ## Em andamento
 
-Sem tarefas em andamento.
+- [ ] **RF05–06 — Análise/segmentação:** agregações em quatro dimensões, Top 5, Top 10 clientes e Bronze/Prata/Ouro. Validação local com 20 testes aprovados e totais conferidos nos 183 registros válidos. Auditoria e versionamento pendentes.
 
 ## Concluído
 

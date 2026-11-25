@@ -1,12 +1,14 @@
-"""SalesInsight PY — preparação e transformação de dados de vendas.
+"""SalesInsight PY — preparação e análise de dados de vendas.
 
 Responsável acadêmico: Fabiano Rodrigo Costa.
 """
 
 import csv
 import re
+from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 from math import isfinite
+from operator import itemgetter
 from pathlib import Path
 from random import Random
 
@@ -232,6 +234,131 @@ def criar_colunas_derivadas(registros: list[dict]) -> list[dict]:
     return enriquecidos
 
 
+def calcular_metricas(registros: list[dict]) -> dict[str, list[dict]]:
+    """Agrupa registros válidos por mês, produto, categoria e região."""
+    vendas_por_mes = defaultdict(Counter)
+    receita_por_produto = Counter()
+    receita_por_categoria = Counter()
+    vendas_por_regiao = defaultdict(Counter)
+
+    for registro in registros:
+        receita_centavos = round(registro["receita_total"] * 100)
+
+        mes = vendas_por_mes[registro["mes"]]
+        mes["receita_centavos"] += receita_centavos
+        mes["quantidade"] += registro["quantidade"]
+        mes["n_vendas"] += 1
+
+        produto = registro["produto"]
+        if produto:
+            receita_por_produto[produto] += receita_centavos
+
+        receita_por_categoria[registro["categoria"] or ""] += receita_centavos
+        regiao = vendas_por_regiao[registro["regiao"] or ""]
+        regiao["receita_centavos"] += receita_centavos
+        regiao["n_vendas"] += 1
+
+    produtos_ordenados = sorted(receita_por_produto.items())
+    produtos_ordenados.sort(key=itemgetter(1), reverse=True)
+    return {
+        "por_mes": [
+            {
+                "mes": mes,
+                "receita_total": resumo["receita_centavos"] / 100,
+                "quantidade": resumo["quantidade"],
+                "n_vendas": resumo["n_vendas"],
+            }
+            for mes, resumo in sorted(vendas_por_mes.items())
+        ],
+        "top_produtos": [
+            {"produto": produto, "receita_total": receita / 100}
+            for produto, receita in produtos_ordenados[:5]
+        ],
+        "por_categoria": [
+            {"categoria": categoria, "receita_total": receita / 100}
+            for categoria, receita in sorted(receita_por_categoria.items())
+        ],
+        "por_regiao": [
+            {
+                "regiao": regiao,
+                "receita_total": resumo["receita_centavos"] / 100,
+                "n_vendas": resumo["n_vendas"],
+                "ticket_medio": resumo["receita_centavos"] / (100 * resumo["n_vendas"]),
+            }
+            for regiao, resumo in sorted(vendas_por_regiao.items())
+        ],
+    }
+
+
+def segmentar_clientes(registros: list[dict]) -> list[dict]:
+    """Retorna os clientes identificados ordenados pelo gasto acumulado."""
+    total_por_cliente = Counter()
+    for registro in registros:
+        cliente = registro["cliente"]
+        if cliente:
+            total_por_cliente[cliente] += round(registro["receita_total"] * 100)
+
+    clientes_ordenados = sorted(total_por_cliente.items())
+    clientes_ordenados.sort(key=itemgetter(1), reverse=True)
+    classificar = lambda total: (
+        "Ouro" if total > 15_000 else "Prata" if total >= 5_000 else "Bronze"
+    )
+    clientes = []
+    for cliente, centavos in clientes_ordenados:
+        total = centavos / 100
+        clientes.append({"cliente": cliente, "total_gasto": total, "segmento": classificar(total)})
+    return clientes
+
+
+def _formatar_reais(valor: float) -> str:
+    return "R$ " + f"{valor:,.2f}".translate(str.maketrans(".,", ",."))
+
+
+def exibir_metricas(metricas: dict[str, list[dict]]) -> None:
+    """Mostra os quatro agrupamentos de vendas no console."""
+    if not metricas["por_mes"]:
+        print("\nMétricas de vendas: sem registros válidos.")
+        return
+
+    print("\nReceita, unidades e vendas por mês:")
+    for linha in metricas["por_mes"]:
+        print(
+            f"  {linha['mes']:02d} | {_formatar_reais(linha['receita_total'])}"
+            f" | {linha['quantidade']} un. | {linha['n_vendas']} vendas"
+        )
+
+    print("\nTop 5 produtos por receita:")
+    for linha in metricas["top_produtos"]:
+        print(f"  {linha['produto']} | {_formatar_reais(linha['receita_total'])}")
+
+    print("\nReceita por categoria:")
+    for linha in metricas["por_categoria"]:
+        categoria = linha["categoria"] or "Sem categoria informada"
+        print(f"  {categoria} | {_formatar_reais(linha['receita_total'])}")
+
+    print("\nReceita e ticket médio por região:")
+    for linha in metricas["por_regiao"]:
+        regiao = linha["regiao"] or "Sem região informada"
+        print(
+            f"  {regiao} | {_formatar_reais(linha['receita_total'])}"
+            f" | Ticket: {_formatar_reais(linha['ticket_medio'])}"
+        )
+
+
+def exibir_segmentacao(clientes: list[dict]) -> None:
+    """Mostra os dez clientes com maior gasto e a distribuição de todos."""
+    print("\nTop 10 clientes por gasto:")
+    if not clientes:
+        print("  Nenhum cliente identificado.")
+    for linha in clientes[:10]:
+        print(f"  {linha['cliente']} | {_formatar_reais(linha['total_gasto'])} | {linha['segmento']}")
+
+    distribuicao = Counter(linha["segmento"] for linha in clientes)
+    print("\nClientes por segmento:")
+    for segmento in ("Bronze", "Prata", "Ouro"):
+        print(f"  {segmento}: {distribuicao[segmento]}")
+
+
 if __name__ == "__main__":
     caminho_csv = Path("vendas.csv")
     if not caminho_csv.exists():
@@ -246,3 +373,5 @@ if __name__ == "__main__":
     if registros_transformados:
         print("\nPrimeiro registro após a transformação:")
         print(registros_transformados[0])
+    exibir_metricas(calcular_metricas(registros_transformados))
+    exibir_segmentacao(segmentar_clientes(registros_transformados))
