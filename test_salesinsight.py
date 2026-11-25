@@ -1,4 +1,4 @@
-"""Testes de geração, leitura e inspeção do Gate 01."""
+"""Testes de geração, inspeção, limpeza e transformação de vendas."""
 
 import csv
 import re
@@ -6,12 +6,19 @@ import subprocess
 import sys
 import unittest
 from contextlib import redirect_stdout
+from datetime import datetime
 from hashlib import sha256
 from io import StringIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from salesinsight import carregar_dataset, gerar_dataset_vendas, inspecionar_dados
+from salesinsight import (
+    carregar_dataset,
+    criar_colunas_derivadas,
+    gerar_dataset_vendas,
+    inspecionar_dados,
+    limpar_dados,
+)
 
 
 CABECALHO = "id_venda,data_venda,cliente,produto,categoria,regiao,quantidade,preco_unitario"
@@ -144,6 +151,156 @@ class TesteDadosVendas(unittest.TestCase):
         self.assertEqual(resultado.stdout, "")
         self.assertEqual(self.csv.read_bytes(), b"")
         self.assertEqual(self.csv.stat().st_mtime_ns, modificacao_original)
+
+
+class TesteLimpezaTransformacao(unittest.TestCase):
+    def setUp(self):
+        self.bruto = {
+            "id_venda": "1",
+            "data_venda": "2025-07-08",
+            "cliente": "Cliente_007",
+            "produto": "Monitor",
+            "categoria": "Computadores",
+            "regiao": "Sul",
+            "quantidade": "2",
+            "preco_unitario": "10.50",
+        }
+
+    def test_limpeza_remove_datas_invalidas_e_ausencias_sem_dupla_contagem(self):
+        registros = [
+            dict(self.bruto, data_venda="DATA INVALIDA"),
+            dict(self.bruto, data_venda="2025-02-30", quantidade=""),
+            dict(self.bruto, quantidade="   "),
+            dict(self.bruto, preco_unitario=None),
+            dict(self.bruto, quantidade="", preco_unitario=""),
+            dict(self.bruto, quantidade="0", preco_unitario="0.0"),
+        ]
+        with redirect_stdout(StringIO()) as saida:
+            limpos, relatorio = limpar_dados(registros)
+
+        self.assertEqual(relatorio, {
+            "iniciais": 6,
+            "removidos_data": 2,
+            "removidos_nulos": 3,
+            "removidos": 5,
+            "finais": 1,
+        })
+        self.assertEqual(relatorio["iniciais"], relatorio["removidos"] + relatorio["finais"])
+        self.assertEqual(limpos[0]["quantidade"], 0)
+        self.assertEqual(limpos[0]["preco_unitario"], 0.0)
+        self.assertIn("Registros recebidos: 6", saida.getvalue())
+        self.assertIn("Registros removidos: 5", saida.getvalue())
+        self.assertIn("Data inválida: 2", saida.getvalue())
+        self.assertIn("Quantidade ou preço ausente: 3", saida.getvalue())
+        self.assertIn("Registros válidos: 1", saida.getvalue())
+
+    def test_limpeza_normaliza_variantes_e_sinaliza_nome_fora_do_padrao(self):
+        nomes = (
+            "Cliente_007",
+            "CLIENTE-007",
+            "Cliente_007!!",
+            " Cliente_007",
+            "cliente#007",
+            "  Outro@ Nome!! ",
+        )
+        registros = [
+            dict(
+                self.bruto,
+                cliente=nome,
+                data_venda=" 2025-07-08 ",
+                produto=" Monitor ",
+                categoria=" Computadores ",
+                regiao=" Sul ",
+                quantidade=" 2.0 ",
+                preco_unitario=" 10.50 ",
+            )
+            for nome in nomes
+        ]
+        brutos = [linha.copy() for linha in registros]
+        with redirect_stdout(StringIO()):
+            limpos, relatorio = limpar_dados(registros)
+
+        self.assertEqual(registros, brutos)
+        self.assertEqual(relatorio["removidos"], 0)
+        self.assertEqual([r["cliente"] for r in limpos], ["Cliente_007"] * 5 + ["OutroNome"])
+        self.assertEqual([r["cliente_fora_do_padrao"] for r in limpos], [False] * 5 + [True])
+        self.assertEqual(limpos[0]["data_venda"], datetime(2025, 7, 8))
+        self.assertIs(type(limpos[0]["quantidade"]), int)
+        self.assertIs(type(limpos[0]["preco_unitario"]), float)
+        self.assertEqual(limpos[0]["quantidade"], 2)
+        self.assertEqual(limpos[0]["preco_unitario"], 10.5)
+        self.assertEqual(limpos[0]["produto"], "Monitor")
+        self.assertEqual(limpos[0]["categoria"], "Computadores")
+        self.assertEqual(limpos[0]["regiao"], "Sul")
+
+    def test_limpeza_rejeita_numero_preenchido_sem_valor_numerico_valido(self):
+        for campos in ({"quantidade": "dois"}, {"preco_unitario": "texto"}, {"preco_unitario": "nan"}):
+            with self.subTest(campos=campos), self.assertRaises(ValueError):
+                limpar_dados([dict(self.bruto, **campos)])
+
+    def test_transformacao_calcula_receita_e_calendario(self):
+        nomes = (
+            "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+            "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+        )
+        limpos = [
+            dict(self.bruto, data_venda=datetime(2025, mes, 1), quantidade=2, preco_unitario=10.5)
+            for mes in range(1, 13)
+        ]
+        originais = [linha.copy() for linha in limpos]
+        derivados = criar_colunas_derivadas(limpos)
+
+        self.assertEqual(limpos, originais)
+        self.assertEqual([r["mes"] for r in derivados], list(range(1, 13)))
+        self.assertEqual([r["mes_nome"] for r in derivados], list(nomes))
+        self.assertEqual(
+            [r["trimestre"] for r in derivados],
+            ["Q1"] * 3 + ["Q2"] * 3 + ["Q3"] * 3 + ["Q4"] * 3,
+        )
+        self.assertEqual([r["ano"] for r in derivados], [2025] * 12)
+        self.assertEqual([r["receita_total"] for r in derivados], [21.0] * 12)
+        self.assertIs(type(derivados[0]["receita_total"]), float)
+        self.assertIs(type(derivados[0]["mes"]), int)
+        self.assertIs(type(derivados[0]["ano"]), int)
+
+    def test_transformacao_classifica_nos_limites_oficiais(self):
+        casos = (
+            (499.99, "Baixo Valor"),
+            (500.0, "Medio Valor"),
+            (4999.99, "Medio Valor"),
+            (5000.0, "Alto Valor"),
+        )
+        for preco, faixa in casos:
+            with self.subTest(receita=preco):
+                linha = dict(
+                    self.bruto, data_venda=datetime(2025, 1, 1), quantidade=1, preco_unitario=preco
+                )
+                resultado, = criar_colunas_derivadas([linha])
+                self.assertEqual(resultado["receita_total"], preco)
+                self.assertEqual(resultado["faixa_receita_item"], faixa)
+
+    def test_dataset_oficial_fecha_contagens_e_gera_colunas_sem_ausencias(self):
+        registros = carregar_dataset(RAIZ / "vendas.csv")
+        with redirect_stdout(StringIO()):
+            limpos, relatorio = limpar_dados(registros)
+        derivados = criar_colunas_derivadas(limpos)
+
+        self.assertEqual(relatorio, {
+            "iniciais": 200,
+            "removidos_data": 4,
+            "removidos_nulos": 13,
+            "removidos": 17,
+            "finais": 183,
+        })
+        self.assertEqual(len(derivados), 183)
+        self.assertTrue(all(not r["cliente_fora_do_padrao"] for r in derivados))
+        self.assertTrue(all(
+            r["receita_total"] == r["quantidade"] * r["preco_unitario"]
+            and r["mes"] == r["data_venda"].month
+            and r["ano"] == r["data_venda"].year
+            and all(valor is not None and valor != "" for valor in r.values())
+            for r in derivados
+        ))
 
 
 if __name__ == "__main__":

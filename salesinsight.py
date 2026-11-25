@@ -1,10 +1,12 @@
-"""SalesInsight PY — geração, leitura e inspeção de dados brutos de vendas.
+"""SalesInsight PY — preparação e transformação de dados de vendas.
 
 Responsável acadêmico: Fabiano Rodrigo Costa.
 """
 
 import csv
+import re
 from datetime import datetime, timedelta
+from math import isfinite
 from pathlib import Path
 from random import Random
 
@@ -125,6 +127,111 @@ def inspecionar_dados(registros: list[dict[str, str | None]]) -> None:
         print(registro)
 
 
+def limpar_dados(
+    registros: list[dict[str, str | None]],
+) -> tuple[list[dict], dict[str, int]]:
+    """Limpa os registros brutos e retorna os válidos e o relatório impresso."""
+    limpos = []
+    relatorio = {"iniciais": len(registros), "removidos_data": 0, "removidos_nulos": 0}
+    padrao_cliente = re.compile(r"Cliente_?([0-9]{3})", flags=re.IGNORECASE)
+
+    for bruto in registros:
+        try:
+            data = datetime.strptime((bruto["data_venda"] or "").strip(), "%Y-%m-%d")
+        except ValueError:
+            relatorio["removidos_data"] += 1
+            continue
+
+        quantidade_txt = (bruto["quantidade"] or "").strip()
+        preco_txt = (bruto["preco_unitario"] or "").strip()
+        if not quantidade_txt or not preco_txt:
+            relatorio["removidos_nulos"] += 1
+            continue
+
+        quantidade = int(float(quantidade_txt))
+        preco = float(preco_txt)
+        if not isfinite(preco):
+            raise ValueError("preco_unitario deve ser um número finito.")
+
+        linha: dict = bruto.copy()
+        for campo in ("cliente", "produto", "categoria", "regiao"):
+            texto = bruto[campo]
+            if texto is not None:
+                linha[campo] = texto.strip()
+
+        cliente = linha["cliente"]
+        if cliente is not None:
+            cliente = re.sub(r"[^A-Za-z0-9_]", "", cliente)
+        identificador = padrao_cliente.fullmatch(cliente or "")
+        linha.update(
+            data_venda=data,
+            quantidade=quantidade,
+            preco_unitario=preco,
+            cliente=f"Cliente_{identificador[1]}" if identificador else cliente,
+            cliente_fora_do_padrao=identificador is None,
+        )
+        limpos.append(linha)
+
+    relatorio["removidos"] = relatorio["removidos_data"] + relatorio["removidos_nulos"]
+    relatorio["finais"] = len(limpos)
+    print("\nRelatório de limpeza:")
+    print(f"  Registros recebidos: {relatorio['iniciais']}")
+    print(f"  Registros removidos: {relatorio['removidos']}")
+    print(f"  Data inválida: {relatorio['removidos_data']}")
+    print(f"  Quantidade ou preço ausente: {relatorio['removidos_nulos']}")
+    print(f"  Registros válidos: {relatorio['finais']}")
+    return limpos, relatorio
+
+
+def criar_colunas_derivadas(registros: list[dict]) -> list[dict]:
+    """Acrescenta receita, calendário e faixa de valor aos registros limpos."""
+    meses = {
+        1: "Janeiro",
+        2: "Fevereiro",
+        3: "Março",
+        4: "Abril",
+        5: "Maio",
+        6: "Junho",
+        7: "Julho",
+        8: "Agosto",
+        9: "Setembro",
+        10: "Outubro",
+        11: "Novembro",
+        12: "Dezembro",
+    }
+    enriquecidos = []
+    for linha in registros:
+        data = linha["data_venda"]
+        mes = data.month
+        if mes <= 3:
+            trimestre = "Q1"
+        elif mes <= 6:
+            trimestre = "Q2"
+        elif mes <= 9:
+            trimestre = "Q3"
+        else:
+            trimestre = "Q4"
+
+        receita = linha["quantidade"] * linha["preco_unitario"]
+        if receita < 500:
+            faixa = "Baixo Valor"
+        elif receita < 5000:
+            faixa = "Medio Valor"
+        else:
+            faixa = "Alto Valor"
+
+        enriquecidos.append({
+            **linha,
+            "receita_total": receita,
+            "mes": mes,
+            "mes_nome": meses[mes],
+            "trimestre": trimestre,
+            "ano": data.year,
+            "faixa_receita_item": faixa,
+        })
+    return enriquecidos
+
+
 if __name__ == "__main__":
     caminho_csv = Path("vendas.csv")
     if not caminho_csv.exists():
@@ -134,3 +241,8 @@ if __name__ == "__main__":
     except CabecalhoCSVInvalido as erro:
         raise SystemExit(str(erro)) from None
     inspecionar_dados(registros)
+    registros_limpos, _ = limpar_dados(registros)
+    registros_transformados = criar_colunas_derivadas(registros_limpos)
+    if registros_transformados:
+        print("\nPrimeiro registro após a transformação:")
+        print(registros_transformados[0])
