@@ -1,0 +1,18 @@
+{
+  "limpeza": {
+    "iniciais": 200,
+    "removidos_data": 4,
+    "removidos_nulos": 13,
+    "removidos": 17,
+    "finais": 183
+  },
+  "n_vendas": 183,
+  "unidades_vendidas": 1031,
+  "receita_total": 1290346.3,
+  "clientes_identificados": 50,
+  "clientes_por_segmento": {
+    "Bronze": 6,
+    "Prata": 10,
+    "Ouro": 34
+  }
+}

@@ -4,13 +4,17 @@ Responsável acadêmico: Fabiano Rodrigo Costa.
 """
 
 import csv
+import json
 import re
 from collections import Counter, defaultdict
+from collections.abc import Callable
 from datetime import datetime, timedelta
 from math import isfinite
 from operator import itemgetter
 from pathlib import Path
 from random import Random
+from shutil import copyfile
+from tempfile import TemporaryDirectory
 
 
 COLUNAS_VENDAS = (
@@ -258,8 +262,7 @@ def calcular_metricas(registros: list[dict]) -> dict[str, list[dict]]:
         regiao["receita_centavos"] += receita_centavos
         regiao["n_vendas"] += 1
 
-    produtos_ordenados = sorted(receita_por_produto.items())
-    produtos_ordenados.sort(key=itemgetter(1), reverse=True)
+    produtos_ordenados = sorted(receita_por_produto.items(), key=lambda item: (-item[1], item[0]))
     return {
         "por_mes": [
             {
@@ -290,6 +293,16 @@ def calcular_metricas(registros: list[dict]) -> dict[str, list[dict]]:
     }
 
 
+def processar_coluna(
+    registros: list[dict], coluna: str, funcao_transformacao: Callable, nome_saida: str
+) -> list[dict]:
+    """Aplica uma função à coluna e devolve cópias com o campo resultante."""
+    return [
+        {**registro, nome_saida: funcao_transformacao(registro[coluna])}
+        for registro in registros
+    ]
+
+
 def segmentar_clientes(registros: list[dict]) -> list[dict]:
     """Retorna os clientes identificados ordenados pelo gasto acumulado."""
     total_por_cliente = Counter()
@@ -300,17 +313,20 @@ def segmentar_clientes(registros: list[dict]) -> list[dict]:
 
     clientes_ordenados = sorted(total_por_cliente.items())
     clientes_ordenados.sort(key=itemgetter(1), reverse=True)
-    classificar = lambda total: (
-        "Ouro" if total > 15_000 else "Prata" if total >= 5_000 else "Bronze"
+    clientes = [
+        {"cliente": cliente, "total_gasto": centavos / 100}
+        for cliente, centavos in clientes_ordenados
+    ]
+    return processar_coluna(
+        clientes,
+        "total_gasto",
+        lambda total: "Ouro" if total > 15_000 else "Prata" if total >= 5_000 else "Bronze",
+        "segmento",
     )
-    clientes = []
-    for cliente, centavos in clientes_ordenados:
-        total = centavos / 100
-        clientes.append({"cliente": cliente, "total_gasto": total, "segmento": classificar(total)})
-    return clientes
 
 
 def _formatar_reais(valor: float) -> str:
+    """Formata um valor monetário para exibição em reais."""
     return "R$ " + f"{valor:,.2f}".translate(str.maketrans(".,", ",."))
 
 
@@ -353,13 +369,94 @@ def exibir_segmentacao(clientes: list[dict]) -> None:
     for linha in clientes[:10]:
         print(f"  {linha['cliente']} | {_formatar_reais(linha['total_gasto'])} | {linha['segmento']}")
 
-    distribuicao = Counter(linha["segmento"] for linha in clientes)
     print("\nClientes por segmento:")
-    for segmento in ("Bronze", "Prata", "Ouro"):
-        print(f"  {segmento}: {distribuicao[segmento]}")
+    for segmento, quantidade in _contar_segmentos(clientes).items():
+        print(f"  {segmento}: {quantidade}")
 
 
-if __name__ == "__main__":
+def _contar_segmentos(clientes: list[dict]) -> dict[str, int]:
+    """Conta clientes em cada segmento, incluindo segmentos vazios."""
+    distribuicao = Counter(linha["segmento"] for linha in clientes)
+    return {segmento: distribuicao[segmento] for segmento in ("Bronze", "Prata", "Ouro")}
+
+
+def calcular_estatisticas(
+    metricas: dict[str, list[dict]], clientes: list[dict], relatorio_limpeza: dict[str, int]
+) -> dict:
+    """Consolida os totais de vendas, limpeza e segmentação para o JSON."""
+    por_mes = metricas["por_mes"]
+    receita_centavos = sum(round(linha["receita_total"] * 100) for linha in por_mes)
+    return {
+        "limpeza": relatorio_limpeza.copy(),
+        "n_vendas": sum(linha["n_vendas"] for linha in por_mes),
+        "unidades_vendidas": sum(linha["quantidade"] for linha in por_mes),
+        "receita_total": receita_centavos / 100,
+        "clientes_identificados": len(clientes),
+        "clientes_por_segmento": _contar_segmentos(clientes),
+    }
+
+
+def exportar_resultados(
+    metricas: dict[str, list[dict]],
+    clientes: list[dict],
+    estatisticas: dict,
+    pasta_saida: str | Path = "outputs",
+) -> dict:
+    """Grava dois CSVs e devolve as estatísticas conferidas no JSON final."""
+    pasta = Path(pasta_saida)
+    pasta.mkdir(parents=True, exist_ok=True)
+    relatorios_csv = (
+        ("metricas_por_mes.csv", ("mes", "receita_total", "quantidade", "n_vendas"), metricas["por_mes"]),
+        ("segmentacao_clientes.csv", ("cliente", "total_gasto", "segmento"), clientes),
+    )
+    nome_json = "estatisticas_gerais.json"
+
+    # A reserva impede que duas execuções substituam os mesmos relatórios ao mesmo tempo.
+    reserva = pasta / ".exportacao-em-andamento"
+    reserva.mkdir()
+    try:
+        with TemporaryDirectory(dir=reserva) as diretorio:
+            temporario = Path(diretorio)
+            for nome, campos, linhas in relatorios_csv:
+                with (temporario / nome).open("w", encoding="utf-8", newline="") as arquivo:
+                    escritor = csv.DictWriter(arquivo, fieldnames=campos)
+                    escritor.writeheader()
+                    escritor.writerows(linhas)
+            with (temporario / nome_json).open("w", encoding="utf-8") as arquivo:
+                json.dump(estatisticas, arquivo, ensure_ascii=False, indent=2, allow_nan=False)
+                arquivo.write("\n")
+
+            destinos = tuple(pasta / nome for nome, _, _ in relatorios_csv) + (pasta / nome_json,)
+            copia_anterior = temporario / "anterior"
+            copia_anterior.mkdir()
+            for destino in destinos:
+                if destino.exists():
+                    copyfile(destino, copia_anterior / destino.name)
+
+            try:
+                for destino in destinos:
+                    (temporario / destino.name).replace(destino)
+                with (pasta / nome_json).open(encoding="utf-8") as arquivo:
+                    relidas = json.load(arquivo)
+                if relidas != estatisticas:
+                    raise ValueError("As estatísticas relidas divergem dos resultados calculados.")
+            except (OSError, ValueError, KeyboardInterrupt):
+                for destino in reversed(destinos):
+                    if (temporario / destino.name).exists():
+                        continue
+                    anterior = copia_anterior / destino.name
+                    if anterior.exists():
+                        anterior.replace(destino)
+                    else:
+                        destino.unlink()
+                raise
+    finally:
+        reserva.rmdir()
+    return relidas
+
+
+def main() -> None:
+    """Executa o fluxo de vendas do CSV bruto à conferência dos relatórios."""
     caminho_csv = Path("vendas.csv")
     if not caminho_csv.exists():
         gerar_dataset_vendas(caminho_csv)
@@ -368,10 +465,25 @@ if __name__ == "__main__":
     except CabecalhoCSVInvalido as erro:
         raise SystemExit(str(erro)) from None
     inspecionar_dados(registros)
-    registros_limpos, _ = limpar_dados(registros)
+    registros_limpos, relatorio = limpar_dados(registros)
     registros_transformados = criar_colunas_derivadas(registros_limpos)
     if registros_transformados:
         print("\nPrimeiro registro após a transformação:")
         print(registros_transformados[0])
-    exibir_metricas(calcular_metricas(registros_transformados))
-    exibir_segmentacao(segmentar_clientes(registros_transformados))
+    metricas = calcular_metricas(registros_transformados)
+    exibir_metricas(metricas)
+    clientes = segmentar_clientes(registros_transformados)
+    exibir_segmentacao(clientes)
+    estatisticas = calcular_estatisticas(metricas, clientes, relatorio)
+    relidas = exportar_resultados(metricas, clientes, estatisticas)
+    print("\nJSON gravado, relido e validado:")
+    print(json.dumps(relidas, ensure_ascii=False, indent=2))
+    print(
+        f"\nExecução concluída: {relidas['n_vendas']} vendas válidas, "
+        f"{relidas['unidades_vendidas']} unidades, {_formatar_reais(relidas['receita_total'])} "
+        f"e {relidas['clientes_identificados']} clientes. Relatórios em outputs/."
+    )
+
+
+if __name__ == "__main__":
+    main()

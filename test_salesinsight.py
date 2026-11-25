@@ -1,6 +1,8 @@
-"""Testes de preparação e análise de dados de vendas."""
+"""Testes de preparação, análise e exportação de dados de vendas."""
 
+import ast
 import csv
+import json
 import re
 import subprocess
 import sys
@@ -12,16 +14,20 @@ from hashlib import sha256
 from io import StringIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from salesinsight import (
+    calcular_estatisticas,
     calcular_metricas,
     carregar_dataset,
     criar_colunas_derivadas,
     exibir_metricas,
     exibir_segmentacao,
+    exportar_resultados,
     gerar_dataset_vendas,
     inspecionar_dados,
     limpar_dados,
+    processar_coluna,
     segmentar_clientes,
 )
 
@@ -451,10 +457,12 @@ class TesteMetricasSegmentacao(unittest.TestCase):
         self.assertEqual(Counter(linha["segmento"] for linha in clientes), {"Bronze": 6, "Prata": 10, "Ouro": 34})
 
     def test_execucao_principal_exibe_as_quatro_metricas_e_a_segmentacao(self):
-        resultado = subprocess.run(
-            [sys.executable, "-X", "utf8", str(RAIZ / "salesinsight.py")],
-            cwd=RAIZ, capture_output=True, encoding="utf-8", check=True,
-        )
+        with TemporaryDirectory() as pasta:
+            (Path(pasta) / "vendas.csv").write_bytes((RAIZ / "vendas.csv").read_bytes())
+            resultado = subprocess.run(
+                [sys.executable, "-X", "utf8", str(RAIZ / "salesinsight.py")],
+                cwd=pasta, capture_output=True, encoding="utf-8", check=True,
+            )
         titulos = (
             "Primeiro registro após a transformação:",
             "Receita, unidades e vendas por mês:",
@@ -469,6 +477,164 @@ class TesteMetricasSegmentacao(unittest.TestCase):
         self.assertIn("Registros válidos: 183", resultado.stdout)
         self.assertIn("Cliente_006 | R$ 65.905,09 | Ouro", resultado.stdout)
         self.assertEqual(resultado.stderr, "")
+
+
+class TesteFuncoesReutilizaveis(unittest.TestCase):
+    def test_processar_coluna_aplica_a_funcao_a_cada_valor(self):
+        registros = [{"quantidade": 2}, {"quantidade": 5}]
+        chamadas = []
+
+        def dobrar(valor):
+            chamadas.append(valor)
+            return 2 * valor
+
+        resultado = processar_coluna(registros, "quantidade", dobrar, "dobro")
+
+        self.assertEqual(chamadas, [2, 5])
+        self.assertEqual(resultado, [{"quantidade": 2, "dobro": 4}, {"quantidade": 5, "dobro": 10}])
+        self.assertEqual(registros, [{"quantidade": 2}, {"quantidade": 5}])
+
+    def test_lambdas_em_ranking_e_classificacao(self):
+        arvore = ast.parse((RAIZ / "salesinsight.py").read_text(encoding="utf-8"))
+        funcoes = {no.name: no for no in arvore.body if isinstance(no, ast.FunctionDef)}
+        casos = (("calcular_metricas", "sorted"), ("segmentar_clientes", "processar_coluna"))
+        for funcao, chamada in casos:
+            with self.subTest(funcao=funcao):
+                self.assertTrue(any(
+                    isinstance(no, ast.Call)
+                    and isinstance(no.func, ast.Name)
+                    and no.func.id == chamada
+                    and any(isinstance(arg, ast.Lambda) for arg in no.args + [kw.value for kw in no.keywords])
+                    for no in ast.walk(funcoes[funcao])
+                ))
+
+
+class TesteExportacaoFluxo(unittest.TestCase):
+    def setUp(self):
+        temporario = TemporaryDirectory()
+        self.addCleanup(temporario.cleanup)
+        self.pasta = Path(temporario.name)
+        self.saida = self.pasta / "outputs"
+        self.nomes = {"metricas_por_mes.csv", "segmentacao_clientes.csv", "estatisticas_gerais.json"}
+
+    def ler_csv(self, nome, cabecalho):
+        with (self.saida / nome).open(encoding="utf-8", newline="") as arquivo:
+            leitor = csv.DictReader(arquivo)
+            self.assertEqual(leitor.fieldnames, cabecalho.split(","))
+            return list(leitor)
+
+    def ler_saidas(self):
+        self.assertEqual({arquivo.name for arquivo in self.saida.iterdir()}, self.nomes)
+        return {nome: (self.saida / nome).read_bytes() for nome in self.nomes}
+
+    def executar_fluxo(self):
+        return subprocess.run(
+            [sys.executable, "-S", "-X", "utf8", str(RAIZ / "salesinsight.py")],
+            cwd=self.pasta, capture_output=True, encoding="utf-8", check=True,
+        )
+
+    def test_exporta_csvs_e_json_coerentes_com_dados_e_calculos(self):
+        brutos = carregar_dataset(RAIZ / "vendas.csv")
+        with redirect_stdout(StringIO()):
+            limpos, relatorio = limpar_dados(brutos)
+        derivados = criar_colunas_derivadas(limpos)
+        metricas = calcular_metricas(derivados)
+        clientes = segmentar_clientes(derivados)
+        estatisticas = calcular_estatisticas(metricas, clientes, relatorio)
+
+        relidas = exportar_resultados(metricas, clientes, estatisticas, self.saida)
+
+        arquivos = self.ler_saidas()
+        meses = self.ler_csv("metricas_por_mes.csv", "mes,receita_total,quantidade,n_vendas")
+        segmentos = self.ler_csv("segmentacao_clientes.csv", "cliente,total_gasto,segmento")
+        self.assertEqual(meses, [{chave: str(valor) for chave, valor in linha.items()} for linha in metricas["por_mes"]])
+        self.assertEqual(segmentos, [{chave: str(valor) for chave, valor in linha.items()} for linha in clientes])
+        self.assertEqual(json.loads(arquivos["estatisticas_gerais.json"]), relidas)
+        self.assertEqual(relidas, estatisticas)
+        self.assertEqual(relidas["limpeza"], relatorio)
+        self.assertEqual((relatorio["iniciais"], relatorio["removidos"], relatorio["finais"]), (200, 17, 183))
+        self.assertEqual(sum(int(linha["n_vendas"]) for linha in meses), relidas["n_vendas"])
+        self.assertEqual(relidas["n_vendas"], len(derivados))
+        self.assertEqual(relidas["unidades_vendidas"], sum(linha["quantidade"] for linha in derivados))
+        self.assertEqual(relidas["unidades_vendidas"], 1031)
+        self.assertEqual(relidas["receita_total"], sum(round(linha["receita_total"] * 100) for linha in derivados) / 100)
+        self.assertEqual(relidas["receita_total"], 1290346.30)
+        self.assertEqual(relidas["clientes_identificados"], len(segmentos))
+        self.assertEqual(relidas["clientes_identificados"], 50)
+        self.assertEqual(relidas["clientes_por_segmento"], {"Bronze": 6, "Prata": 10, "Ouro": 34})
+
+    def test_exportacao_preserva_acentos_em_utf8(self):
+        clientes = [{"cliente": "São José", "total_gasto": 1.25, "segmento": "Bronze"}]
+        estatisticas = {"descrição": "Análise de março"}
+        self.assertEqual(exportar_resultados({"por_mes": []}, clientes, estatisticas, self.saida), estatisticas)
+        arquivos = self.ler_saidas()
+        self.assertIn("São José".encode(), arquivos["segmentacao_clientes.csv"])
+        self.assertIn("Análise de março".encode(), arquivos["estatisticas_gerais.json"])
+
+    def test_falha_na_escrita_do_json_preserva_exportacoes_anteriores(self):
+        metricas = {"por_mes": []}
+        exportar_resultados(metricas, [], {"n_vendas": 0}, self.saida)
+        anteriores = self.ler_saidas()
+
+        with self.assertRaises(ValueError):
+            exportar_resultados(metricas, [], {"receita_total": float("nan")}, self.saida)
+
+        self.assertEqual(self.ler_saidas(), anteriores)
+
+    def test_falha_na_substituicao_restaura_exportacoes_anteriores(self):
+        exportar_resultados({"por_mes": []}, [], {"n_vendas": 0}, self.saida)
+        anteriores = self.ler_saidas()
+        metricas = {"por_mes": [{"mes": 1, "receita_total": 50, "quantidade": 1, "n_vendas": 1}]}
+        substituir = Path.replace
+
+        for erro in (PermissionError, KeyboardInterrupt):
+            def falhar_no_segundo_csv(origem, destino):
+                if destino.name == "segmentacao_clientes.csv":
+                    raise erro
+                return substituir(origem, destino)
+
+            with self.subTest(erro=erro.__name__):
+                with patch.object(Path, "replace", autospec=True, side_effect=falhar_no_segundo_csv):
+                    with self.assertRaises(erro):
+                        exportar_resultados(metricas, [], {"n_vendas": 1}, self.saida)
+                self.assertEqual(self.ler_saidas(), anteriores)
+
+    def test_releitura_divergente_impede_publicacao_do_conjunto(self):
+        with patch("salesinsight.json.load", return_value={"n_vendas": 2}):
+            with self.assertRaisesRegex(ValueError, "divergem"):
+                exportar_resultados({"por_mes": []}, [], {"n_vendas": 0}, self.saida)
+
+        self.assertEqual(list(self.saida.iterdir()), [])
+
+    def test_fluxo_do_zero_preserva_dados_e_reproduz_saidas_sem_site_packages(self):
+        primeira = self.executar_fluxo()
+        vendas = self.pasta / "vendas.csv"
+        brutos = vendas.read_bytes()
+        relatorios = self.ler_saidas()
+        self.assertEqual(brutos, (RAIZ / "vendas.csv").read_bytes())
+        self.assertEqual(len(carregar_dataset(vendas)), 200)
+        self.assertIn("JSON gravado, relido e validado:", primeira.stdout)
+        self.assertIn("Execução concluída: 183 vendas válidas, 1031 unidades, R$ 1.290.346,30 e 50 clientes", primeira.stdout)
+        self.assertEqual(primeira.stderr, "")
+
+        segunda = self.executar_fluxo()
+
+        self.assertEqual(vendas.read_bytes(), brutos)
+        self.assertEqual(self.ler_saidas(), relatorios)
+        self.assertEqual(segunda.stdout, primeira.stdout)
+
+    def test_fluxo_com_csv_sem_vendas_exporta_cabecalhos_e_totais_zero(self):
+        (self.pasta / "vendas.csv").write_text(CABECALHO + "\n", encoding="utf-8")
+
+        self.executar_fluxo()
+
+        arquivos = self.ler_saidas()
+        self.assertEqual(self.ler_csv("metricas_por_mes.csv", "mes,receita_total,quantidade,n_vendas"), [])
+        self.assertEqual(self.ler_csv("segmentacao_clientes.csv", "cliente,total_gasto,segmento"), [])
+        estatisticas = json.loads(arquivos["estatisticas_gerais.json"])
+        self.assertEqual(estatisticas["n_vendas"], 0)
+        self.assertEqual(estatisticas["receita_total"], 0.0)
+        self.assertEqual(estatisticas["clientes_por_segmento"], {"Bronze": 0, "Prata": 0, "Ouro": 0})
 
 
 if __name__ == "__main__":

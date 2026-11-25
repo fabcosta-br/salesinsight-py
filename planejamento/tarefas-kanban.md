@@ -5,8 +5,7 @@
 
 ## A fazer
 
-- [ ] **RF07–09 — Arquitetura/saída:** funções, ordem superior, exportações CSV/JSON e execução `main()` sem erros.
-- [ ] **D1 — README:** transformar documentação de planejamento em manual verificável.
+- [ ] **D1 — README:** inserir o link público do vídeo e conferir as instruções na entrega final.
 - [ ] **D2 — Revisão Git:** branches, commits claros, PRs, comparação `develop → main`.
 - [ ] **D3 — Auditoria:** execução independente do zero e revisão da rubrica linha a linha.
 - [ ] **V1 — Roteiro:** máximo de 5 minutos e cobertura integral dos tópicos.
@@ -15,7 +14,7 @@
 
 ## Em andamento
 
-- [ ] **RF05–06 — Análise/segmentação:** agregações em quatro dimensões, Top 5, Top 10 clientes e Bronze/Prata/Ouro. Validação local com 20 testes aprovados e totais conferidos nos 183 registros válidos. Auditoria e versionamento pendentes.
+- [ ] **RF07–RF09 — Gate 04.** Função de ordem superior, dois usos de `lambda`, exportações CSV/JSON e `main()` validados com 29 testes. Documentação e saídas conferidas localmente. Revisão e autorização para versionamento pendentes.
 
 ## Concluído
 
@@ -25,6 +24,7 @@
 - [x] **P0.3 — Ambiente:** verificar Python 3.12, VS Code, GitHub Desktop e execução local básica.
 - [x] **RF01–02 — Dados/inspeção:** gerador e inspeção validados. Integração em `origin/develop` pelo PR nº 1 (`e8f331d`).
 - [x] **RF03–04 — Limpeza/derivação:** implementação validada com 12 testes aprovados. Publicação confirmada no commit `be2b37c`.
+- [x] **RF05–RF06 — Métricas e segmentação.** Os 20 testes de referência passaram. Integração em `origin/develop` pelo PR nº 3 (`1f53ee1`).
 - [x] Enunciado oficial consultado e divergências da versão reduzida registradas.
 - [x] Novo prazo de 30/11/2026 23h59 confirmado no AVA pela pedagoga.
 
