@@ -3,7 +3,7 @@
 **Projeto acadêmico:** SCTEC/SENAI — Desenvolvimento de IA para Análise Preditiva — Turma T4, Módulo 1 (Mini-Projeto da Semana 08).  
 **Responsável acadêmico:** Fabiano Rodrigo Costa.
 
-> **Status: RF01–RF04 implementados e validados localmente.** RF05–RF09 seguem planejados.
+> **Status: RF01–RF06 implementados e validados localmente.** RF07–RF09 seguem planejados.
 
 ## Objetivo
 
@@ -31,12 +31,14 @@ flowchart TD
     inspecao["RF02 — Inspeção dos dados (validada)"]
     limpeza["RF03 — Limpeza e relatório (validados)"]
     transformacao["RF04 — Colunas derivadas (validadas)"]
-    analise["RF05–RF09 — Análise e exportação (futuras)"]
+    analise["RF05–RF06 — Métricas e segmentação (validadas)"]
+    entrega["RF07–RF09 — Fluxo final (futuro)"]
     origem --> geracao
     geracao --> inspecao
     inspecao --> limpeza
     limpeza --> transformacao
     transformacao --> analise
+    analise --> entrega
 ```
 
 ## Estrutura
@@ -44,9 +46,9 @@ flowchart TD
 ```text
 salesinsight-py/
 ├── README.md
-├── salesinsight.py           # preparação e transformação de vendas
+├── salesinsight.py           # preparação e análise de vendas
 ├── vendas.csv               # dados sintéticos de RF01
-├── test_salesinsight.py      # testes de RF01–RF04
+├── test_salesinsight.py      # testes de RF01–RF06
 ├── outputs/                 # relatórios CSV/JSON produzidos em RF08
 └── planejamento/
     ├── matriz-requisitos.md
@@ -65,15 +67,15 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe --version
 ```
 
-Para executar RF01–RF04, rode na raiz do repositório:
+Para executar RF01–RF06, rode na raiz do repositório:
 
 ```powershell
 .\.venv\Scripts\python.exe -X utf8 salesinsight.py
 ```
 
-O script carrega `vendas.csv` do diretório atual. Se o arquivo estiver ausente, ele executa o gerador da opção A e grava 200 registros sintéticos em UTF-8 com `seed=42`. A inspeção exibe as dimensões, os nomes das colunas, as ausências por coluna e as primeiras cinco linhas brutas. Em seguida, a execução exibe o relatório de limpeza e, quando há registros válidos, o primeiro registro transformado.
+O script carrega `vendas.csv` do diretório atual. Se o arquivo estiver ausente, ele executa o gerador da opção A e grava 200 registros sintéticos em UTF-8 com `seed=42`. A inspeção exibe as dimensões, os nomes das colunas, as ausências por coluna e as primeiras cinco linhas brutas. Em seguida, a execução exibe o relatório de limpeza, o primeiro registro transformado quando disponível, as métricas de vendas e a segmentação de clientes.
 
-Para rodar os testes de RF01–RF04:
+Para rodar os testes de RF01–RF06:
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest -v
@@ -102,6 +104,22 @@ A geração com os mesmos parâmetros produz o mesmo arquivo. O SHA-256 do CSV g
 A limpeza recebeu **200 registros**, descartou **17** (4 por data inválida e 13 por ausência de quantidade ou preço) e manteve **183**. Cada linha é contada uma vez, com prioridade para data inválida. As variantes de cliente do gerador são normalizadas para `Cliente_NNN`. Nomes sem identificador reconhecível recebem a marca `cliente_fora_do_padrao`. Campos numéricos preenchidos que falham na conversão geram um erro de entrada.
 
 A transformação acrescenta receita, mês, nome do mês em português, trimestre, ano e faixa de receita. As faixas são `Baixo Valor` abaixo de R$ 500, `Medio Valor` de R$ 500 até abaixo de R$ 5.000 e `Alto Valor` a partir de R$ 5.000. No registro 1, duas unidades a R$ 102,90 resultam em R$ 205,80 na faixa `Baixo Valor`, em maio de 2025 (Q2).
+
+### Métricas e segmentação
+
+Os 183 registros válidos somaram **1.031 unidades** e **R$ 1.290.346,30** de receita. Os totais por mês, categoria e região e os gastos dos 50 clientes identificados foram conferidos contra a receita dos registros válidos.
+
+| Indicador | Resultado |
+|---|---|
+| Produto líder | Notebook · R$ 374.174,85 |
+| Região líder em receita | Nordeste · R$ 366.321,23 em 42 vendas |
+| Ticket médio no Nordeste | R$ 8.721,93 |
+| Cliente líder | `Cliente_006` · R$ 65.905,09 |
+| Distribuição de clientes | 6 Bronze, 10 Prata e 34 Ouro |
+
+O ticket médio divide a receita da região pela quantidade de registros válidos da região. As somas usam centavos por registro. O agrupamento mensal usa o número do mês, e empates nos rankings são resolvidos pelo nome em ordem crescente. Linhas sem produto ou cliente informado entram nas métricas de vendas e ficam fora dos respectivos rankings. Valores vazios de categoria ou região têm agrupamento próprio.
+
+A classificação com `lambda` usa o gasto acumulado. Bronze corresponde a menos de R$ 5.000, Prata vai de R$ 5.000 a R$ 15.000 inclusive e Ouro corresponde a mais de R$ 15.000.
 
 A demonstração do fluxo completo e o link público do vídeo permanecem previstos para a entrega final. Ferramentas de IA foram utilizadas como apoio à implementação e à verificação técnica.
 
