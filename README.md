@@ -3,7 +3,7 @@
 **Projeto acadêmico:** SCTEC/SENAI — Desenvolvimento de IA para Análise Preditiva — Turma T4, Módulo 1 (Mini-Projeto da Semana 08).  
 **Responsável acadêmico:** Fabiano Rodrigo Costa.
 
-> **Status: RF01–RF06 implementados e validados localmente.** RF07–RF09 seguem planejados.
+> **RF01–RF09 implementados.** O fluxo completo e os 29 testes passaram localmente com Python 3.12.10. A revisão para versionamento do Gate 04, o vídeo e a submissão no AVA estão pendentes.
 
 ## Objetivo
 
@@ -26,19 +26,19 @@ A opção A, recomendada no enunciado, gera dados sintéticos em Python. A opç�
 
 ```mermaid
 flowchart TD
-    origem["Origem dos dados · Opção A"]
-    geracao["RF01 — Geração do CSV (validada)"]
-    inspecao["RF02 — Inspeção dos dados (validada)"]
-    limpeza["RF03 — Limpeza e relatório (validados)"]
-    transformacao["RF04 — Colunas derivadas (validadas)"]
-    analise["RF05–RF06 — Métricas e segmentação (validadas)"]
-    entrega["RF07–RF09 — Fluxo final (futuro)"]
-    origem --> geracao
+    geracao["RF01 · Carregar ou gerar vendas.csv"]
+    inspecao["RF02 · Inspecionar os dados brutos"]
+    limpeza["RF03 · Limpar e relatar descartes"]
+    transformacao["RF04 · Criar colunas derivadas"]
+    analise["RF05–RF07 · Agregar e segmentar"]
+    exportacao["RF08 · Exportar e validar o JSON"]
+    resumo["RF09 · Exibir o resumo da execução"]
     geracao --> inspecao
     inspecao --> limpeza
     limpeza --> transformacao
     transformacao --> analise
-    analise --> entrega
+    analise --> exportacao
+    exportacao --> resumo
 ```
 
 ## Estrutura
@@ -46,10 +46,13 @@ flowchart TD
 ```text
 salesinsight-py/
 ├── README.md
-├── salesinsight.py           # preparação e análise de vendas
+├── salesinsight.py           # fluxo completo, da leitura à exportação
 ├── vendas.csv               # dados sintéticos de RF01
-├── test_salesinsight.py      # testes de RF01–RF06
-├── outputs/                 # relatórios CSV/JSON produzidos em RF08
+├── test_salesinsight.py      # testes de RF01–RF09
+├── outputs/
+│   ├── metricas_por_mes.csv
+│   ├── segmentacao_clientes.csv
+│   └── estatisticas_gerais.json
 └── planejamento/
     ├── matriz-requisitos.md
     ├── tarefas-kanban.md
@@ -57,7 +60,7 @@ salesinsight-py/
     └── checklist-rubrica.md
 ```
 
-## Ambiente previsto (Windows / PowerShell)
+## Instalação e execução (Windows / PowerShell)
 
 Recomendação: Python 3.12, VS Code com extensão Python e GitHub Desktop. O trabalho obrigatório utiliza apenas a biblioteca padrão do Python; **não requer instalações de bibliotecas externas**.
 
@@ -67,19 +70,39 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe --version
 ```
 
-Para executar RF01–RF06, rode na raiz do repositório:
+Execute na raiz do repositório.
 
 ```powershell
 .\.venv\Scripts\python.exe -X utf8 salesinsight.py
 ```
 
-O script carrega `vendas.csv` do diretório atual. Se o arquivo estiver ausente, ele executa o gerador da opção A e grava 200 registros sintéticos em UTF-8 com `seed=42`. A inspeção exibe as dimensões, os nomes das colunas, as ausências por coluna e as primeiras cinco linhas brutas. Em seguida, a execução exibe o relatório de limpeza, o primeiro registro transformado quando disponível, as métricas de vendas e a segmentação de clientes.
+O script carrega `vendas.csv` do diretório atual. Se o arquivo estiver ausente, ele executa o gerador da opção A e grava 200 registros sintéticos em UTF-8 com `seed=42`. O console apresenta a inspeção, o relatório de limpeza, o primeiro registro transformado quando disponível, os agrupamentos de vendas e a segmentação. A função `main()` coordena essas etapas, gera os relatórios e exibe o JSON relido antes do resumo final.
 
-Para rodar os testes de RF01–RF06:
+Execute a suíte de testes.
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest -v
 ```
+
+São 29 testes, incluindo os 20 de RF01–RF06. Os testes do Gate 04 validam a função de ordem superior, os dois usos de `lambda`, os cabeçalhos, a reconciliação de totais e a releitura do JSON. O fluxo também é executado em uma pasta temporária com `-S`, que desativa a inicialização de `site` e a inclusão de `site-packages`. Duas execuções com o mesmo dataset reproduzem as saídas byte a byte.
+
+## Relatórios gerados
+
+| Arquivo | Conteúdo |
+|---|---|
+| `outputs/metricas_por_mes.csv` | Mês, receita total, unidades vendidas e número de vendas. São 12 linhas de dados na execução de referência. |
+| `outputs/segmentacao_clientes.csv` | Identificação, gasto acumulado e segmento de cada cliente. São 50 linhas de dados na referência. |
+| `outputs/estatisticas_gerais.json` | Contagens da limpeza, vendas válidas, unidades, receita, clientes identificados e distribuição por segmento. |
+
+Os arquivos usam UTF-8. Os CSVs usam vírgula como separador de campos e ponto decimal para valores monetários. O programa substitui os relatórios a cada execução bem-sucedida e compara o JSON relido com as estatísticas calculadas. `vendas.csv` é lido como entrada quando já existe.
+
+## Conceitos aplicados
+
+- Listas, dicionários, laços e condicionais para representar registros, agrupar vendas e classificar faixas.
+- `datetime` e expressões regulares para validar datas, derivar campos de calendário e normalizar clientes.
+- Funções com parâmetros, retornos e docstrings. `processar_coluna()` recebe a função que classifica o gasto acumulado e devolve cópias dos registros com o segmento.
+- Uma `lambda` ordena produtos por receita decrescente e resolve empates pelo nome. Outra classifica clientes por gasto.
+- `csv.DictReader`, `csv.DictWriter`, `json.dump()` e `json.load()` para leitura, exportação e conferência.
 
 ## Versionamento planejado
 
@@ -121,7 +144,7 @@ O ticket médio divide a receita da região pela quantidade de registros válido
 
 A classificação com `lambda` usa o gasto acumulado. Bronze corresponde a menos de R$ 5.000, Prata vai de R$ 5.000 a R$ 15.000 inclusive e Ouro corresponde a mais de R$ 15.000.
 
-A demonstração do fluxo completo e o link público do vídeo permanecem previstos para a entrega final. Ferramentas de IA foram utilizadas como apoio à implementação e à verificação técnica.
+A gravação da demonstração, o link público do vídeo e a submissão no AVA estão pendentes. Ferramentas de IA foram utilizadas como apoio à implementação e à verificação técnica.
 
 ## Referência
 
