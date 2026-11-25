@@ -3,7 +3,7 @@
 **Projeto acadêmico:** SCTEC/SENAI — Desenvolvimento de IA para Análise Preditiva — Turma T4, Módulo 1 (Mini-Projeto da Semana 08).  
 **Responsável acadêmico:** Fabiano Rodrigo Costa.
 
-> **Status: RF01 e RF02 implementados.** O projeto completo segue em desenvolvimento.
+> **Status: RF01–RF04 implementados e validados localmente.** RF05–RF09 seguem planejados.
 
 ## Objetivo
 
@@ -26,15 +26,17 @@ A opção A, recomendada no enunciado, gera dados sintéticos em Python. A opç�
 
 ```mermaid
 flowchart TD
-    origem["Escolha da origem dos dados (opção A selecionada)"]
-    geracao["RF01 — Geração (concluída)"]
-    inspecao["RF02 — Inspeção (concluída)"]
-    tratamento["RF03/RF04 — Limpeza e transformação (futuras)"]
+    origem["Origem dos dados · Opção A"]
+    geracao["RF01 — Geração do CSV (validada)"]
+    inspecao["RF02 — Inspeção dos dados (validada)"]
+    limpeza["RF03 — Limpeza e relatório (validados)"]
+    transformacao["RF04 — Colunas derivadas (validadas)"]
     analise["RF05–RF09 — Análise e exportação (futuras)"]
     origem --> geracao
     geracao --> inspecao
-    inspecao --> tratamento
-    tratamento --> analise
+    inspecao --> limpeza
+    limpeza --> transformacao
+    transformacao --> analise
 ```
 
 ## Estrutura
@@ -42,9 +44,9 @@ flowchart TD
 ```text
 salesinsight-py/
 ├── README.md
-├── salesinsight.py           # geração, leitura e inspeção
+├── salesinsight.py           # preparação e transformação de vendas
 ├── vendas.csv               # dados sintéticos de RF01
-├── test_salesinsight.py      # testes de RF01 e RF02
+├── test_salesinsight.py      # testes de RF01–RF04
 ├── outputs/                 # relatórios CSV/JSON produzidos em RF08
 └── planejamento/
     ├── matriz-requisitos.md
@@ -63,15 +65,15 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe --version
 ```
 
-Para executar RF01 e RF02, rode na raiz do repositório:
+Para executar RF01–RF04, rode na raiz do repositório:
 
 ```powershell
 .\.venv\Scripts\python.exe -X utf8 salesinsight.py
 ```
 
-O script carrega `vendas.csv` do diretório atual. Se o arquivo estiver ausente, ele executa o gerador da opção A e grava 200 registros sintéticos em UTF-8 com `seed=42`. A inspeção exibe as dimensões, os nomes das colunas, as ausências por coluna e as primeiras cinco linhas.
+O script carrega `vendas.csv` do diretório atual. Se o arquivo estiver ausente, ele executa o gerador da opção A e grava 200 registros sintéticos em UTF-8 com `seed=42`. A inspeção exibe as dimensões, os nomes das colunas, as ausências por coluna e as primeiras cinco linhas brutas. Em seguida, a execução exibe o relatório de limpeza e, quando há registros válidos, o primeiro registro transformado.
 
-Para rodar os testes de RF01 e RF02:
+Para rodar os testes de RF01–RF04:
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest -v
@@ -96,6 +98,10 @@ A execução de referência com Python 3.12.10 e `seed=42` produziu **200 regist
 O registro 2 tem quantidade vazia, o registro 11 contém `DATA INVALIDA` e o registro 12 contém o produto `" Headset "`. O preço unitário está vazio no registro 18.
 
 A geração com os mesmos parâmetros produz o mesmo arquivo. O SHA-256 do CSV gerado em Python 3.12.10 é `5d8b1e07856f3b1ad4c433840cb1845643de3175450908f919cf83f7c21f0859`.
+
+A limpeza recebeu **200 registros**, descartou **17** (4 por data inválida e 13 por ausência de quantidade ou preço) e manteve **183**. Cada linha é contada uma vez, com prioridade para data inválida. As variantes de cliente do gerador são normalizadas para `Cliente_NNN`. Nomes sem identificador reconhecível recebem a marca `cliente_fora_do_padrao`. Campos numéricos preenchidos que falham na conversão geram um erro de entrada.
+
+A transformação acrescenta receita, mês, nome do mês em português, trimestre, ano e faixa de receita. As faixas são `Baixo Valor` abaixo de R$ 500, `Medio Valor` de R$ 500 até abaixo de R$ 5.000 e `Alto Valor` a partir de R$ 5.000. No registro 1, duas unidades a R$ 102,90 resultam em R$ 205,80 na faixa `Baixo Valor`, em maio de 2025 (Q2).
 
 A demonstração do fluxo completo e o link público do vídeo permanecem previstos para a entrega final. Ferramentas de IA foram utilizadas como apoio à implementação e à verificação técnica.
 
