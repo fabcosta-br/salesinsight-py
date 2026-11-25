@@ -5,9 +5,6 @@
 
 ## A fazer
 
-- [ ] **P0.1 — Repositório:** criar `fabcosta-br/salesinsight-py` público com `main`.
-- [ ] **P0.2 — Git:** criar `develop` a partir de `main`; registrar snapshot inicial; confirmar autores, acesso público e branch padrão.
-- [ ] **P0.3 — Ambiente:** verificar Python 3.12, VS Code, GitHub Desktop e execução local básica.
 - [ ] **RF05–06 — Análise/segmentação:** agregações em quatro dimensões, Top 5, Top 10 clientes e Bronze/Prata/Ouro.
 - [ ] **RF07–09 — Arquitetura/saída:** funções, ordem superior, exportações CSV/JSON e execução `main()` sem erros.
 - [ ] **D1 — README:** transformar documentação de planejamento em manual verificável.
@@ -19,12 +16,16 @@
 
 ## Em andamento
 
-- [ ] **RF03–04 — Limpeza/derivação:** implementação validada com a suíte de 12 testes. Auditoria e versionamento pendentes.
-- [x] **P0.0 — Escopo:** matriz RF01–RF09, cronograma e estratégia Git documentados.
+Sem tarefas em andamento.
 
 ## Concluído
 
+- [x] **P0.0 — Escopo:** matriz RF01–RF09, cronograma e estratégia Git documentados.
+- [x] **P0.1 — Repositório:** criar `fabcosta-br/salesinsight-py` público com `main`.
+- [x] **P0.2 — Git:** criar `develop` a partir de `main`; registrar snapshot inicial; confirmar autores, acesso público e branch padrão.
+- [x] **P0.3 — Ambiente:** verificar Python 3.12, VS Code, GitHub Desktop e execução local básica.
 - [x] **RF01–02 — Dados/inspeção:** gerador e inspeção validados. Integração em `origin/develop` pelo PR nº 1 (`e8f331d`).
+- [x] **RF03–04 — Limpeza/derivação:** implementação validada com 12 testes aprovados. Publicação confirmada no commit `be2b37c`.
 - [x] Enunciado oficial consultado e divergências da versão reduzida registradas.
 - [x] Novo prazo de 30/11/2026 23h59 confirmado no AVA pela pedagoga.
 
