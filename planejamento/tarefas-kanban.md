@@ -15,7 +15,7 @@
 
 ## Em andamento
 
-- [ ] **Gate 05 — Qualidade e documentação.** Revisão executiva do README, atualização da rastreabilidade e correção preventiva da exportação em `docs/readme`. Auditoria e autorização para versionamento pendentes.
+- [ ] **Gate 05 — Integração em `develop`.** O PR nº 5 está aberto e a integração segue pendente. [PR nº 5](https://github.com/fabcosta-br/salesinsight-py/pull/5)
 
 ## Concluído
 
@@ -27,6 +27,7 @@
 - [x] **RF03–04 — Limpeza/derivação:** implementação validada com 12 testes aprovados. Publicação confirmada no commit `be2b37c`.
 - [x] **RF05–RF06 — Métricas e segmentação.** Os 20 testes de referência passaram. Integração em `origin/develop` pelo PR nº 3 (`1f53ee1`).
 - [x] **RF07–RF09 — Gate 04.** Fluxo integrado, CSVs e JSON relido validados com 29 testes. Publicação em `feat/exportacao-fluxo` (`6f4ac6c`) e integração em `origin/develop` (`adf9233`). [PR nº 4](https://github.com/fabcosta-br/salesinsight-py/pull/4)
+- [x] **Gate 05 — Versionamento e publicação.** Revisão executiva do README, atualização da rastreabilidade e correção preventiva da exportação publicadas em `docs/readme` no commit `8b1a4b1`.
 - [x] Enunciado oficial consultado e divergências da versão reduzida registradas.
 
 ## Política de movimentação

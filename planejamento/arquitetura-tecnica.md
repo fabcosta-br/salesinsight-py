@@ -4,7 +4,9 @@
 
 Aplicação de linha de comando com a **biblioteca padrão do Python**. `main()` coordena a leitura ou geração de `vendas.csv`, prepara os registros e usa as métricas e os segmentos para compor os relatórios.
 
-RF07–RF09 foram publicados no commit `6f4ac6c` de `feat/exportacao-fluxo` e integrados em `develop` no commit `adf9233`. A revisão preventiva do Gate 05 está em `docs/readme`, aguardando auditoria e versionamento. [PR nº 4](https://github.com/fabcosta-br/salesinsight-py/pull/4)
+RF07–RF09 foram publicados no commit `6f4ac6c` de `feat/exportacao-fluxo` e integrados em `develop` no commit `adf9233`. [PR nº 4](https://github.com/fabcosta-br/salesinsight-py/pull/4)
+
+A revisão preventiva do Gate 05 foi publicada em `docs/readme` no commit `8b1a4b1`. A integração em `develop` segue pendente pelo PR nº 5, que está aberto. [PR nº 5](https://github.com/fabcosta-br/salesinsight-py/pull/5)
 
 ```text
 vendas.csv (gerado ou carregado)
