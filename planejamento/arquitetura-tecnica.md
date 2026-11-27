@@ -8,6 +8,8 @@ RF07–RF09 foram publicados no commit `6f4ac6c` de `feat/exportacao-fluxo` e in
 
 A revisão preventiva do Gate 05 foi publicada em `docs/readme` no commit `8b1a4b1` e integrada em `develop` no commit `6ac11d3`, concluindo o Gate 05. [PR nº 5](https://github.com/fabcosta-br/salesinsight-py/pull/5)
 
+A revisão técnica do Gate 06 foi concluída e integrada em `develop` no commit `f39c7a8`. A organização didática do código preservou a AST e os tokens executáveis. [PR nº 6](https://github.com/fabcosta-br/salesinsight-py/pull/6)
+
 ```text
 vendas.csv (gerado ou carregado)
    ↓ RF02: inspeção
