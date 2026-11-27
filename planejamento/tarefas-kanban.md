@@ -1,32 +1,33 @@
 # Kanban — SalesInsight PY
 
-**Responsável:** Fabiano Rodrigo Costa · **Início:** 24/11/2026 · **Prazo AVA:** 30/11/2026 23h59  
-**Marco interno:** engenharia concluída 27/11; vídeo 28–29/11; envio validado até 30/11 12h.
+**Responsável acadêmico** — Fabiano Rodrigo Costa
+
+**Prazo oficial no AVA** — 30/11/2026 às 23h59.
 
 ## A fazer
 
-- [ ] **P0.1 — Repositório:** criar `fabcosta-br/salesinsight-py` público com `main`.
-- [ ] **P0.2 — Git:** criar `develop` a partir de `main`; registrar snapshot inicial; confirmar autores, acesso público e branch padrão.
-- [ ] **P0.3 — Ambiente:** verificar Python 3.12, VS Code, GitHub Desktop e execução local básica.
-- [ ] **RF01–02 — Dados/inspeção:** dataset de vendas sintético + leitura + inspeção com testes de contagem.
-- [ ] **RF03–04 — Limpeza/derivação:** datas, ausentes, regex, tipos, receita e calendário.
-- [ ] **RF05–06 — Análise/segmentação:** agregações em quatro dimensões, Top 5, Top 10 clientes e Bronze/Prata/Ouro.
-- [ ] **RF07–09 — Arquitetura/saída:** funções, ordem superior, exportações CSV/JSON e execução `main()` sem erros.
-- [ ] **D1 — README:** transformar documentação de planejamento em manual verificável.
-- [ ] **D2 — Revisão Git:** branches, commits claros, PRs, comparação `develop → main`.
-- [ ] **D3 — Auditoria:** execução independente do zero e revisão da rubrica linha a linha.
+- [ ] **D1 — README:** inserir o link público do vídeo.
 - [ ] **V1 — Roteiro:** máximo de 5 minutos e cobertura integral dos tópicos.
 - [ ] **V2 — Gravação:** demonstração real, câmera, voz, explicação do Kanban/branches.
 - [ ] **S1 — Submissão:** links públicos testados em janela privada e comprovante do AVA.
 
 ## Em andamento
 
-- [x] **P0.0 — Escopo:** matriz RF01–RF09, cronograma e estratégia Git documentados.
+- [ ] **D2 — Versão acadêmica 1.0:** preparação documental em andamento. A integração em `main` aguarda aprovação.
 
 ## Concluído
 
+- [x] **P0.0 — Escopo:** matriz RF01–RF09, cronograma e estratégia Git documentados.
+- [x] **P0.1 — Repositório:** criar `fabcosta-br/salesinsight-py` público com `main`.
+- [x] **P0.2 — Git:** criar `develop` a partir de `main`; registrar snapshot inicial; confirmar autores, acesso público e branch padrão.
+- [x] **P0.3 — Ambiente:** verificar Python 3.12, VS Code, GitHub Desktop e execução local básica.
+- [x] **RF01–02 — Dados/inspeção:** gerador e inspeção validados. Integração em `origin/develop` pelo PR nº 1 (`e8f331d`).
+- [x] **RF03–04 — Limpeza/derivação:** implementação validada com 12 testes aprovados. Publicação confirmada no commit `be2b37c`.
+- [x] **RF05–RF06 — Métricas e segmentação.** Os 20 testes de referência passaram. Integração em `origin/develop` pelo PR nº 3 (`1f53ee1`).
+- [x] **RF07–RF09 — Gate 04.** Fluxo integrado, CSVs e JSON relido validados com 29 testes. Publicação em `feat/exportacao-fluxo` (`6f4ac6c`) e integração em `origin/develop` (`adf9233`). [PR nº 4](https://github.com/fabcosta-br/salesinsight-py/pull/4)
+- [x] **Gate 05 — Qualidade e documentação.** Revisão do README, atualização da rastreabilidade e correção preventiva da exportação publicadas em `docs/readme` (`8b1a4b1`) e integradas em `develop` (`6ac11d3`). [PR nº 5](https://github.com/fabcosta-br/salesinsight-py/pull/5)
+- [x] **D3 — Gate 06, revisão técnica.** Execução independente do zero e revisão da rubrica concluídas. Auditoria e documentação do código integradas em `develop` (`f39c7a8`). [PR nº 6](https://github.com/fabcosta-br/salesinsight-py/pull/6)
 - [x] Enunciado oficial consultado e divergências da versão reduzida registradas.
-- [x] Novo prazo de 30/11/2026 23h59 confirmado no AVA pela pedagoga.
 
 ## Política de movimentação
 
