@@ -9,11 +9,12 @@
 - [ ] **D1 — README:** inserir o link público do vídeo.
 - [ ] **V1 — Roteiro:** máximo de 5 minutos e cobertura integral dos tópicos.
 - [ ] **V2 — Gravação:** demonstração real, câmera, voz, explicação do Kanban/branches.
+- [ ] **V3 — Publicação do vídeo:** disponibilizar a URL pública e conferir o acesso.
 - [ ] **S1 — Submissão:** links públicos testados em janela privada e comprovante do AVA.
 
 ## Em andamento
 
-- [ ] **D2 — Versão acadêmica 1.0:** preparação documental em andamento. A integração em `main` aguarda aprovação.
+- [ ] **Hotfix documental final:** ajustes no README e no Kanban da versão acadêmica 1.0 em revisão.
 
 ## Concluído
 
@@ -27,6 +28,7 @@
 - [x] **RF07–RF09 — Gate 04.** Fluxo integrado, CSVs e JSON relido validados com 29 testes. Publicação em `feat/exportacao-fluxo` (`6f4ac6c`) e integração em `origin/develop` (`adf9233`). [PR nº 4](https://github.com/fabcosta-br/salesinsight-py/pull/4)
 - [x] **Gate 05 — Qualidade e documentação.** Revisão do README, atualização da rastreabilidade e correção preventiva da exportação publicadas em `docs/readme` (`8b1a4b1`) e integradas em `develop` (`6ac11d3`). [PR nº 5](https://github.com/fabcosta-br/salesinsight-py/pull/5)
 - [x] **D3 — Gate 06, revisão técnica.** Execução independente do zero e revisão da rubrica concluídas. Auditoria e documentação do código integradas em `develop` (`f39c7a8`). [PR nº 6](https://github.com/fabcosta-br/salesinsight-py/pull/6)
+- [x] **D2 — Versão acadêmica 1.0:** `develop` integrada em `main` no commit `6cbd724`. [PR nº 8](https://github.com/fabcosta-br/salesinsight-py/pull/8)
 - [x] Enunciado oficial consultado e divergências da versão reduzida registradas.
 
 ## Política de movimentação
