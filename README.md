@@ -7,7 +7,7 @@
 - **Atividade** — Mini-Projeto Avaliativo — Semana 08.
 - **Responsável acadêmico** — Fabiano Rodrigo Costa.
 - **Natureza** — Mini-projeto avaliativo de análise de dados.
-- **Status** — RF01–RF09 implementados, validados e integrados em `develop`. O Gate 05 foi concluído com a revisão editorial e a correção preventiva de permissões no Windows. O Gate 06 está em andamento. A integração em `main`, o vídeo, seu link público e a submissão no AVA estão pendentes.
+- **Status** — RF01–RF09 implementados, validados e integrados em `develop`. O Gate 05 foi concluído com a revisão editorial e a correção preventiva de permissões no Windows. A revisão técnica do Gate 06 foi concluída e integrada em `develop` pelo PR nº 6. A gravação do vídeo, sua URL pública e a submissão no AVA seguem pendentes.
 
 ## Sumário executivo
 
@@ -241,15 +241,16 @@ O histórico do Git registra a evolução por requisito e o estado da entrega. A
 
 | Branch | Escopo e estado |
 |---|---|
-| `main` | Versão estável. Integração final pendente. |
-| `develop` | Integração dos Gates 01–05. |
+| `main` | Branch destinada à entrega da versão acadêmica 1.0. |
+| `develop` | Integração dos Gates 01–06. |
 | `feat/dados-inspecao` | RF01–RF02 · PR nº 1 (`e8f331d`). |
 | `feat/limpeza-transformacao` | RF03–RF04 · PR nº 2 (`7bd726d`). |
 | `feat/metricas-segmentacao` | RF05–RF06 · PR nº 3 (`1f53ee1`). |
 | `feat/exportacao-fluxo` | RF07–RF09 · Commit `6f4ac6c` e PR nº 4 (`adf9233`). |
 | `docs/readme` | Gate 05 · Revisão editorial e correção preventiva do exportador, integradas pelo PR nº 5 (`6ac11d3`). |
+| `docs/gate-06-auditoria` | Gate 06 · Revisão técnica e documentação do código, integradas pelo PR nº 6 (`f39c7a8`). |
 
-As branches de funcionalidade partem de `develop` e são integradas após revisão do incremento. O Gate 04 reúne a execução completa e a exportação verificada. [Kanban](planejamento/tarefas-kanban.md) · [PR nº 4](https://github.com/fabcosta-br/salesinsight-py/pull/4) · [PR nº 5](https://github.com/fabcosta-br/salesinsight-py/pull/5)
+As branches de funcionalidade partem de `develop` e são integradas após revisão do incremento. O Gate 04 reúne a execução completa e a exportação verificada. [Kanban](planejamento/tarefas-kanban.md) · [PR nº 4](https://github.com/fabcosta-br/salesinsight-py/pull/4) · [PR nº 5](https://github.com/fabcosta-br/salesinsight-py/pull/5) · [PR nº 6](https://github.com/fabcosta-br/salesinsight-py/pull/6)
 
 ### 9.2 Testes locais e evidências
 
@@ -306,4 +307,4 @@ Este mini-projeto foi desenvolvido por Fabiano Rodrigo Costa, estudante da Turma
 
 ---
 
-*SalesInsight PY · Fabiano Rodrigo Costa · SCTEC/SENAI · Turma T4 · 2026 · Submissão no AVA pendente · Documentação candidata à versão 1.0*
+*SalesInsight PY · Fabiano Rodrigo Costa · SCTEC/SENAI · Turma T4 · 2026 · Submissão no AVA pendente · Documentação da versão acadêmica 1.0*

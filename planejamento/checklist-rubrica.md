@@ -5,7 +5,7 @@
 ## Avaliação (até 10 pontos)
 
 - [ ] README com objetivo, instalação, execução e conceitos revisados no Gate 05. Link público do vídeo pendente — **1,00**.
-- [x] Branches por funcionalidade, commits descritivos e evolução registrada nos PRs nº 1 a 5 — **1,00**.
+- [x] Branches por funcionalidade, commits descritivos e evolução registrada nos PRs nº 1 a 6 — **1,00**.
 - [ ] Vídeo até 5 min: execução do início ao fim, decisão técnica e melhorias; também Kanban, ambiente e branches — **2,00**.
 - [x] RF01–RF03: carregar, inspecionar, limpar datas e nulos, normalizar texto com regex e apresentar relatório. Evidência validada localmente — **2,00**.
 - [x] RF04–RF06: derivar colunas, calcular as quatro agregações e segmentar clientes com lambda. Evidência validada localmente — **2,50**.
@@ -22,8 +22,8 @@
 - [x] Três saídas em `outputs/` conferidas. CSVs com 12 linhas mensais e 50 clientes, e JSON reconciliado com os totais.
 - [x] Pelo menos cinco commits de trabalho individual, com mensagens descritivas e integração por PR.
 - [x] Execução limpa e saídas idênticas em duas rodadas com Python 3.12.10. Suíte de 29 testes aprovada.
-- [ ] Auditoria final e aprovação do Gate 06.
-- [ ] Integração final em `main`.
+- [x] Revisão técnica do Gate 06 concluída e integrada em `develop` no commit `f39c7a8`. [PR nº 6](https://github.com/fabcosta-br/salesinsight-py/pull/6)
+- [ ] Integração da versão acadêmica 1.0 em `main`.
 - [ ] Vídeo abre em janela privada sem senha, áudio/sincronismo legíveis.
 - [ ] GitHub público e vídeo acessível; links submetidos no AVA antes de 30/11 23h59.
 - [ ] Status **Enviado para avaliação** ou equivalente e comprovante salvos.
