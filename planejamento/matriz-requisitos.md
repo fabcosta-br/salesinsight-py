@@ -28,6 +28,6 @@
 | RF08–RF09 | 0,50 | CSV/JSON, leitura e `main()` |
 | **Total** | **10,00** | |
 
-A revisão preventiva de RF08 no Gate 05 foi publicada em `docs/readme` no commit `8b1a4b1`. A integração em `develop` está pendente pelo PR nº 5, que está aberto. A integração em `main`, o vídeo e a submissão no AVA também estão pendentes. [PR nº 5](https://github.com/fabcosta-br/salesinsight-py/pull/5)
+A revisão preventiva de RF08 no Gate 05 foi publicada em `docs/readme` no commit `8b1a4b1` e integrada em `develop` no commit `6ac11d3`. A auditoria final do Gate 06 está em andamento. A integração em `main`, a gravação do vídeo e a submissão no AVA seguem pendentes. [PR nº 5](https://github.com/fabcosta-br/salesinsight-py/pull/5)
 
 **Atenção ao enunciado:** o sumário anterior enumera RF01–RF11 com NumPy/gráficos/classes, mas a versão reduzida vigente detalha RF01–RF09 como obrigatórios. Os itens opcionais não pontuam nesta versão. O professor deve poder distinguir implementação e revisão a partir do histórico.

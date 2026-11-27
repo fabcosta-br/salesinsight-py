@@ -3,6 +3,23 @@
 Responsável acadêmico: Fabiano Rodrigo Costa.
 """
 
+# Guia de leitura
+# Mini-Projeto Avaliativo do SCTEC/SENAI, Turma T4, Módulo 1.
+# Curso de Desenvolvimento de IA para Análise Preditiva.
+# O programa transforma registros de vendas em métricas e segmentos de clientes
+# e exporta os resultados em CSV e JSON.
+#
+# 01 Configuração · 02 Geração, leitura e inspeção · 03 Limpeza
+# 04 Transformação · 05 Métricas · 06 Funções reutilizáveis e segmentação
+# 07 Resultados · 08 Exportação · 09 Orquestração
+#
+# Consulte README.md para o escopo, a execução e os resultados de referência.
+
+# -----------------------------------------------------------------------------
+# 01 — Configuração e contratos de dados
+# Reúne os imports da biblioteca padrão, as colunas do CSV e o erro de cabeçalho.
+# -----------------------------------------------------------------------------
+
 import csv
 import json
 import re
@@ -31,6 +48,11 @@ COLUNAS_VENDAS = (
 class CabecalhoCSVInvalido(ValueError):
     """O CSV não contém o cabeçalho esperado."""
 
+
+# -----------------------------------------------------------------------------
+# 02 — Geração, leitura e inspeção
+# Gera a base sintética, lê o CSV e apresenta um diagnóstico dos dados brutos.
+# -----------------------------------------------------------------------------
 
 def gerar_dataset_vendas(
     caminho_csv: str | Path = "vendas.csv", n_registros: int = 200, seed: int = 42
@@ -133,6 +155,11 @@ def inspecionar_dados(registros: list[dict[str, str | None]]) -> None:
         print(registro)
 
 
+# -----------------------------------------------------------------------------
+# 03 — Limpeza e validação
+# Normaliza os campos e contabiliza descartes por data inválida ou dados ausentes.
+# -----------------------------------------------------------------------------
+
 def limpar_dados(
     registros: list[dict[str, str | None]],
 ) -> tuple[list[dict], dict[str, int]]:
@@ -189,6 +216,11 @@ def limpar_dados(
     return limpos, relatorio
 
 
+# -----------------------------------------------------------------------------
+# 04 — Transformação e enriquecimento
+# Acrescenta receita por item, informações de calendário e faixas de valor.
+# -----------------------------------------------------------------------------
+
 def criar_colunas_derivadas(registros: list[dict]) -> list[dict]:
     """Acrescenta receita, calendário e faixa de valor aos registros limpos."""
     meses = {
@@ -237,6 +269,11 @@ def criar_colunas_derivadas(registros: list[dict]) -> list[dict]:
         })
     return enriquecidos
 
+
+# -----------------------------------------------------------------------------
+# 05 — Análise e métricas comerciais
+# Agrega vendas por mês, produto, categoria e região, com somas em centavos.
+# -----------------------------------------------------------------------------
 
 def calcular_metricas(registros: list[dict]) -> dict[str, list[dict]]:
     """Agrupa registros válidos por mês, produto, categoria e região."""
@@ -293,6 +330,11 @@ def calcular_metricas(registros: list[dict]) -> dict[str, list[dict]]:
     }
 
 
+# -----------------------------------------------------------------------------
+# 06 — Funções reutilizáveis e segmentação
+# Aplica transformações por coluna e classifica clientes pelo gasto acumulado.
+# -----------------------------------------------------------------------------
+
 def processar_coluna(
     registros: list[dict], coluna: str, funcao_transformacao: Callable, nome_saida: str
 ) -> list[dict]:
@@ -324,6 +366,11 @@ def segmentar_clientes(registros: list[dict]) -> list[dict]:
         "segmento",
     )
 
+
+# -----------------------------------------------------------------------------
+# 07 — Exibição e consolidação dos resultados
+# Formata a saída do console e consolida totais e contagens para o JSON.
+# -----------------------------------------------------------------------------
 
 def _formatar_reais(valor: float) -> str:
     """Formata um valor monetário para exibição em reais."""
@@ -396,6 +443,11 @@ def calcular_estatisticas(
     }
 
 
+# -----------------------------------------------------------------------------
+# 08 — Exportação e integridade dos relatórios
+# Prepara os arquivos, mantém cópias de recuperação e confere a releitura do JSON.
+# -----------------------------------------------------------------------------
+
 def exportar_resultados(
     metricas: dict[str, list[dict]],
     clientes: list[dict],
@@ -458,6 +510,11 @@ def exportar_resultados(
     return relidas
 
 
+# -----------------------------------------------------------------------------
+# 09 — Orquestração e ponto de entrada
+# Encadeia as etapas da leitura ao resumo e define o ponto de entrada do script.
+# -----------------------------------------------------------------------------
+
 def main() -> None:
     """Executa o fluxo de vendas do CSV bruto à conferência dos relatórios."""
     caminho_csv = Path("vendas.csv")
@@ -488,5 +545,6 @@ def main() -> None:
     )
 
 
+# Ao fim do fluxo, o programa confere os relatórios e exibe os indicadores.
 if __name__ == "__main__":
     main()
