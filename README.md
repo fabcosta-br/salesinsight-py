@@ -7,7 +7,7 @@
 - **Atividade** — Mini-Projeto Avaliativo — Semana 08.
 - **Responsável acadêmico** — Fabiano Rodrigo Costa.
 - **Natureza** — Mini-projeto avaliativo de análise de dados.
-- **Status** — RF01–RF09 implementados, validados e integrados em `develop`. O Gate 05 foi concluído com a revisão editorial e a correção preventiva de permissões no Windows. A revisão técnica do Gate 06 foi concluída e integrada em `develop` pelo PR nº 6. A gravação do vídeo, sua URL pública e a submissão no AVA seguem pendentes.
+- **Status** — RF01–RF09 implementados e validados na versão acadêmica 1.0. O Gate 05 foi concluído com a revisão editorial e a correção preventiva de permissões no Windows. A revisão técnica do Gate 06 foi concluída e integrada em `develop` pelo PR nº 6.
 
 ## Sumário executivo
 
@@ -15,7 +15,7 @@ O SalesInsight PY simula a rotina de análise de um varejo que precisa transform
 
 A execução de referência começa com 200 registros sintéticos de 2025. A limpeza exclui 17 registros e entrega 183 vendas válidas, que somam 1.031 unidades e R$ 1.290.346,30 de receita. Os 50 clientes identificados se distribuem em 6 Bronze, 10 Prata e 34 Ouro. Em dados reais, o mesmo tipo de análise poderia orientar o acompanhamento de qualidade da entrada, o planejamento de estoque e a priorização de ações de relacionamento.
 
-A biblioteca padrão do Python cobre todo o fluxo. A semente fixa garante uma entrada reproduzível e os 29 testes verificam desde a leitura até a exportação. A análise é descritiva e os resultados dizem respeito ao cenário sintético. As seções seguintes registram as evidências técnicas e o que falta para a entrega acadêmica.
+A biblioteca padrão do Python cobre todo o fluxo. A semente fixa garante uma entrada reproduzível e os 29 testes verificam desde a leitura até a exportação. A análise é descritiva e os resultados dizem respeito ao cenário sintético. As seções seguintes registram as evidências técnicas e as orientações para a entrega acadêmica.
 
 ## 1. 🌎 Contexto e relevância
 
@@ -192,7 +192,7 @@ A base cobre um ano sintético e o agrupamento mensal usa apenas o número do m�
 
 ## 8. ⚙️ Ambiente, estrutura do repositório e execução
 
-A estrutura separa o script, a entrada bruta, os testes, os relatórios e o planejamento. A execução foi validada em Windows com PowerShell e Python 3.12.10. O Git permite obter uma cópia da branch que contém o Gate 04, e o VS Code pode ser usado para navegar pelo código e pela documentação.
+A estrutura separa o script, a entrada bruta, os testes, os relatórios e o planejamento. A execução foi validada em Windows com PowerShell e Python 3.12.10. Use o VS Code para navegar pelo código e pela documentação.
 
 ### 8.1 Estrutura do repositório
 
@@ -216,10 +216,10 @@ salesinsight-py/
 
 ### 8.2 Instalação e execução
 
-Em uma cópia nova, clone o repositório pela branch `develop`, que contém RF01–RF09.
+Clone o repositório pela branch estável `main`, que contém a versão acadêmica 1.0.
 
 ```powershell
-git clone -b develop https://github.com/fabcosta-br/salesinsight-py.git
+git clone -b main https://github.com/fabcosta-br/salesinsight-py.git
 cd salesinsight-py
 ```
 
@@ -235,13 +235,13 @@ A execução apresenta a inspeção, os descartes, um exemplo de transformação
 
 ## 9. 🔀 Versionamento, testes e demonstração em vídeo
 
-O histórico do Git registra a evolução por requisito e o estado da entrega. A suíte local confirma a execução técnica. A apresentação em vídeo e a submissão ao AVA são etapas acadêmicas próprias e permanecem pendentes.
+O histórico do Git registra a evolução por requisito e as integrações. A suíte local confirma a execução técnica. O Kanban acompanha a demonstração em vídeo e a submissão ao AVA.
 
 ### 9.1 Branches e integrações
 
 | Branch | Escopo e estado |
 |---|---|
-| `main` | Branch destinada à entrega da versão acadêmica 1.0. |
+| `main` | Versão acadêmica 1.0 integrada no commit `6cbd724`. [PR nº 8](https://github.com/fabcosta-br/salesinsight-py/pull/8) |
 | `develop` | Integração dos Gates 01–06. |
 | `feat/dados-inspecao` | RF01–RF02 · PR nº 1 (`e8f331d`). |
 | `feat/limpeza-transformacao` | RF03–RF04 · PR nº 2 (`7bd726d`). |
@@ -262,9 +262,9 @@ A suíte possui 29 testes, incluindo os 20 de RF01–RF06. Os casos cobrem gera�
 
 ### 9.3 Vídeo e entrega no AVA
 
-- **Demonstração em vídeo** — gravação pendente. O enunciado prevê até cinco minutos para apresentar a execução, o ambiente, o Kanban, as branches, uma decisão técnica e uma oportunidade de melhoria.
-- **Link público do vídeo** — pendente de gravação, publicação e conferência de acesso.
-- **Submissão no AVA** — pendente. O prazo oficial registrado no AVA é **30 de novembro de 2026, às 23h59**. A entrega inclui os links do repositório público e do vídeo, seguidos da conferência do recebimento.
+- **Demonstração em vídeo** — em até cinco minutos, demonstre a execução, explique o ambiente, apresente as branches e o Kanban e comente uma decisão técnica e uma oportunidade de melhoria.
+- **Link público do vídeo** — publique o vídeo e confira o acesso pela URL pública.
+- **Submissão no AVA** — disponibilize os links do repositório público e do vídeo no AVA e confira o recebimento.
 
 Ferramentas de IA foram utilizadas como apoio à implementação, à revisão da documentação e à verificação técnica.
 
@@ -307,4 +307,4 @@ Este mini-projeto foi desenvolvido por Fabiano Rodrigo Costa, estudante da Turma
 
 ---
 
-*SalesInsight PY · Fabiano Rodrigo Costa · SCTEC/SENAI · Turma T4 · 2026 · Submissão no AVA pendente · Documentação da versão acadêmica 1.0*
+*SalesInsight PY · Fabiano Rodrigo Costa · SCTEC/SENAI · Turma T4 · 2026 · Documentação da versão acadêmica 1.0*
