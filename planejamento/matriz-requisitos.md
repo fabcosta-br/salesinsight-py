@@ -1,7 +1,7 @@
 # Matriz de rastreabilidade — SalesInsight PY (T4)
 
 **Fonte:** enunciado M1S08, versão reduzida 10/09/2026, seções 4.2 e 5.  
-**Status:** RF01–RF09 implementados e validados localmente com Python 3.12.10. O Gate 04 reúne 29 testes aprovados e está em revisão para versionamento.
+**Status:** RF01–RF09 implementados e validados com Python 3.12.10. O Gate 04 (RF07–RF09) foi publicado em `feat/exportacao-fluxo` no commit `6f4ac6c` e integrado em `develop` no merge `adf9233`. A suíte tem 29 testes aprovados. [PR nº 4](https://github.com/fabcosta-br/salesinsight-py/pull/4)
 
 | ID | Obrigação verificável | Evidência | Aceite técnico | Branch |
 |---|---|---|---|---|
@@ -19,7 +19,7 @@
 
 | Critério | Pontuação máxima | Evidência |
 |---|---:|---|
-| README com objetivo, instalação, execução, conceitos e link do vídeo | 1,00 | `README.md` completo |
+| README com objetivo, instalação, execução, conceitos e link do vídeo | 1,00 | `README.md` revisado no Gate 05. Link do vídeo pendente. |
 | GitHub: branches descritivas e commits que reflitam evolução lógica | 1,00 | `main`/`develop`, features e PRs, pelo menos 5 commits individuais |
 | Vídeo até cinco minutos: execução, decisão técnica e oportunidades de melhoria | 2,00 | URL pública funcional |
 | RF01–RF03 | 2,00 | Dados/limpeza + relatório |
@@ -27,5 +27,7 @@
 | RF07 | 1,00 | Funções, lambda, ordem superior |
 | RF08–RF09 | 0,50 | CSV/JSON, leitura e `main()` |
 | **Total** | **10,00** | |
+
+A revisão preventiva de RF08 no Gate 05 está em `docs/readme`, aguardando auditoria e versionamento. A integração em `main`, o vídeo e a submissão no AVA estão pendentes.
 
 **Atenção ao enunciado:** o sumário anterior enumera RF01–RF11 com NumPy/gráficos/classes, mas a versão reduzida vigente detalha RF01–RF09 como obrigatórios. Os itens opcionais não pontuam nesta versão. O professor deve poder distinguir implementação e revisão a partir do histórico.

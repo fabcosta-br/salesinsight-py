@@ -1,12 +1,13 @@
 # Kanban — SalesInsight PY
 
-**Responsável:** Fabiano Rodrigo Costa · **Início:** 24/11/2026 · **Prazo AVA:** 30/11/2026 23h59  
-**Marco interno:** engenharia concluída 27/11; vídeo 28–29/11; envio validado até 30/11 12h.
+**Responsável acadêmico** — Fabiano Rodrigo Costa
+
+**Prazo oficial no AVA** — 30/11/2026 às 23h59.
 
 ## A fazer
 
-- [ ] **D1 — README:** inserir o link público do vídeo e conferir as instruções na entrega final.
-- [ ] **D2 — Revisão Git:** branches, commits claros, PRs, comparação `develop → main`.
+- [ ] **D1 — README:** inserir o link público do vídeo.
+- [ ] **D2 — Integração final:** comparar `develop` e `main` e solicitar aprovação para a versão de entrega.
 - [ ] **D3 — Auditoria:** execução independente do zero e revisão da rubrica linha a linha.
 - [ ] **V1 — Roteiro:** máximo de 5 minutos e cobertura integral dos tópicos.
 - [ ] **V2 — Gravação:** demonstração real, câmera, voz, explicação do Kanban/branches.
@@ -14,7 +15,7 @@
 
 ## Em andamento
 
-- [ ] **RF07–RF09 — Gate 04.** Função de ordem superior, dois usos de `lambda`, exportações CSV/JSON e `main()` validados com 29 testes. Documentação e saídas conferidas localmente. Revisão e autorização para versionamento pendentes.
+- [ ] **Gate 05 — Qualidade e documentação.** Revisão executiva do README, atualização da rastreabilidade e correção preventiva da exportação em `docs/readme`. Auditoria e autorização para versionamento pendentes.
 
 ## Concluído
 
@@ -25,8 +26,8 @@
 - [x] **RF01–02 — Dados/inspeção:** gerador e inspeção validados. Integração em `origin/develop` pelo PR nº 1 (`e8f331d`).
 - [x] **RF03–04 — Limpeza/derivação:** implementação validada com 12 testes aprovados. Publicação confirmada no commit `be2b37c`.
 - [x] **RF05–RF06 — Métricas e segmentação.** Os 20 testes de referência passaram. Integração em `origin/develop` pelo PR nº 3 (`1f53ee1`).
+- [x] **RF07–RF09 — Gate 04.** Fluxo integrado, CSVs e JSON relido validados com 29 testes. Publicação em `feat/exportacao-fluxo` (`6f4ac6c`) e integração em `origin/develop` (`adf9233`). [PR nº 4](https://github.com/fabcosta-br/salesinsight-py/pull/4)
 - [x] Enunciado oficial consultado e divergências da versão reduzida registradas.
-- [x] Novo prazo de 30/11/2026 23h59 confirmado no AVA pela pedagoga.
 
 ## Política de movimentação
 

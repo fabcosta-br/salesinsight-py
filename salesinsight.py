@@ -8,13 +8,13 @@ import json
 import re
 from collections import Counter, defaultdict
 from collections.abc import Callable
+from contextlib import ExitStack
 from datetime import datetime, timedelta
 from math import isfinite
 from operator import itemgetter
 from pathlib import Path
 from random import Random
 from shutil import copyfile
-from tempfile import TemporaryDirectory
 
 
 COLUNAS_VENDAS = (
@@ -410,48 +410,51 @@ def exportar_resultados(
         ("segmentacao_clientes.csv", ("cliente", "total_gasto", "segmento"), clientes),
     )
     nome_json = "estatisticas_gerais.json"
+    destinos = tuple(pasta / nome for nome, _, _ in relatorios_csv) + (pasta / nome_json,)
 
-    # A reserva impede que duas execuções substituam os mesmos relatórios ao mesmo tempo.
+    # A reserva exclusiva herda as permissões da pasta de saída. No NTFS,
+    # os relatórios mantêm essas permissões ao serem movidos para o destino.
     reserva = pasta / ".exportacao-em-andamento"
-    reserva.mkdir()
-    try:
-        with TemporaryDirectory(dir=reserva) as diretorio:
-            temporario = Path(diretorio)
-            for nome, campos, linhas in relatorios_csv:
-                with (temporario / nome).open("w", encoding="utf-8", newline="") as arquivo:
-                    escritor = csv.DictWriter(arquivo, fieldnames=campos)
-                    escritor.writeheader()
-                    escritor.writerows(linhas)
-            with (temporario / nome_json).open("w", encoding="utf-8") as arquivo:
-                json.dump(estatisticas, arquivo, ensure_ascii=False, indent=2, allow_nan=False)
-                arquivo.write("\n")
+    with ExitStack() as limpar_temporarios:
+        reserva.mkdir()
+        limpar_temporarios.callback(reserva.rmdir)
+        copia_anterior = reserva / "anterior"
+        copia_anterior.mkdir()
+        limpar_temporarios.callback(copia_anterior.rmdir)
+        for destino in destinos:
+            limpar_temporarios.callback((reserva / destino.name).unlink, missing_ok=True)
+            limpar_temporarios.callback((copia_anterior / destino.name).unlink, missing_ok=True)
 
-            destinos = tuple(pasta / nome for nome, _, _ in relatorios_csv) + (pasta / nome_json,)
-            copia_anterior = temporario / "anterior"
-            copia_anterior.mkdir()
+        for nome, campos, linhas in relatorios_csv:
+            with (reserva / nome).open("w", encoding="utf-8", newline="") as arquivo:
+                escritor = csv.DictWriter(arquivo, fieldnames=campos)
+                escritor.writeheader()
+                escritor.writerows(linhas)
+        with (reserva / nome_json).open("w", encoding="utf-8") as arquivo:
+            json.dump(estatisticas, arquivo, ensure_ascii=False, indent=2, allow_nan=False)
+            arquivo.write("\n")
+
+        for destino in destinos:
+            if destino.exists():
+                copyfile(destino, copia_anterior / destino.name)
+
+        try:
             for destino in destinos:
-                if destino.exists():
-                    copyfile(destino, copia_anterior / destino.name)
-
-            try:
-                for destino in destinos:
-                    (temporario / destino.name).replace(destino)
-                with (pasta / nome_json).open(encoding="utf-8") as arquivo:
-                    relidas = json.load(arquivo)
-                if relidas != estatisticas:
-                    raise ValueError("As estatísticas relidas divergem dos resultados calculados.")
-            except (OSError, ValueError, KeyboardInterrupt):
-                for destino in reversed(destinos):
-                    if (temporario / destino.name).exists():
-                        continue
-                    anterior = copia_anterior / destino.name
-                    if anterior.exists():
-                        anterior.replace(destino)
-                    else:
-                        destino.unlink()
-                raise
-    finally:
-        reserva.rmdir()
+                (reserva / destino.name).replace(destino)
+            with (pasta / nome_json).open(encoding="utf-8") as arquivo:
+                relidas = json.load(arquivo)
+            if relidas != estatisticas:
+                raise ValueError("As estatísticas relidas divergem dos resultados calculados.")
+        except (OSError, ValueError, KeyboardInterrupt):
+            for destino in reversed(destinos):
+                if (reserva / destino.name).exists():
+                    continue
+                anterior = copia_anterior / destino.name
+                if anterior.exists():
+                    anterior.replace(destino)
+                else:
+                    destino.unlink()
+            raise
     return relidas
 
 
