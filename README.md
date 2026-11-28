@@ -1,13 +1,10 @@
 # SalesInsight PY — Análise de Dados de Vendas
 
-- **Projeto acadêmico** — SCTEC/SENAI.
-- **Curso** — Desenvolvimento de IA para Análise Preditiva.
-- **Turma** — T4.
-- **Módulo 1** — Fundamentos de Dados, Programação e Análise Preditiva com Python — 150 horas.
-- **Atividade** — Mini-Projeto Avaliativo — Semana 08.
-- **Responsável acadêmico** — Fabiano Rodrigo Costa.
-- **Natureza** — Mini-projeto avaliativo de análise de dados.
-- **Status** — RF01–RF09 implementados e validados na versão acadêmica 1.0. O Gate 05 foi concluído com a revisão editorial e a correção preventiva de permissões no Windows. A revisão técnica do Gate 06 foi concluída e integrada em `develop` pelo PR nº 6.
+- **Instituição** — SCTEC/SENAI · Carreira Tech 2026.
+- **Curso** — Desenvolvimento de IA para Análise Preditiva · Turma T4.
+- **Módulo 1** — Fundamentos de Dados, Programação e Análise Preditiva com Python · 150 horas.
+- **Atividade** — Mini-Projeto Avaliativo de Análise de Dados.
+- **Autor acadêmico** — Fabiano Rodrigo Costa.
 
 ## Sumário executivo
 
